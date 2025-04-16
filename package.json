@@ -1,29 +1,29 @@
 {
-    "name": "se-2",
-    "version": "0.0.1",
-    "private": true,
-    "workspaces": {
-        "packages": [
-            "src/*"
-        ]
+    "name": "eas-attestation-tutorial",
+    "version": "1.0.0",
+    "description": "TypeScript project for EAS attestation tutorial",
+    "main": "dist/attest.js",
+    "scripts": {
+        "build": "tsc",
+        "start": "ts-node src/attest.ts",
+        "test": "echo \"Error: no test specified\" && exit 1"
     },
-    "scripts": {},
-    "devDependencies": {
-        "@commitlint/cli": "^19.3.0",
-        "@types/mapbox-gl": "^3",
-        "@types/react": "latest",
-        "@types/react-copy-to-clipboard": "^5.0.7",
-        "@types/react-dom": "latest",
-        "commitlint": "^19.3.0",
-        "cross-env": "^7.0.3",
-        "husky": "^9.1.6",
-        "lint-staged": "latest"
-    },
+    "keywords": [
+        "eas",
+        "attestation",
+        "ethereum",
+        "typescript"
+    ],
+    "author": "",
+    "license": "ISC",
     "dependencies": {
-        "@ethereum-attestation-service/eas-sdk": "1.6.1"
+        "@ethereum-attestation-service/eas-sdk": "^2.7.0",
+        "dotenv": "^16.4.5",
+        "ethers": "^6"
     },
-    "resolutions": {
-        "ethers": "^6.13.2"
-    },
-    "packageManager": "yarn@1.22.22+sha512.a6b2f7906b721bba3d67d4aff083df04dad64c399707841b7acf00f6b133b7ac24255f2652fa22ae3534329dc6180534e98d17432037ff6fd140556e2bb3137e"
+    "devDependencies": {
+        "@types/node": "^20.12.12",
+        "ts-node": "^10.9.2",
+        "typescript": "^5.4.5"
+    }
 }
