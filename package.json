@@ -8,7 +8,7 @@
         ]
     },
     "scripts": {
-        "start": "ts-node src/index.ts"
+        "run": "ts-node src/index.ts"
     },
     "devDependencies": {
         "@commitlint/cli": "^19.3.0",
