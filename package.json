@@ -7,20 +7,26 @@
             "src/*"
         ]
     },
-    "scripts": {},
+    "scripts": {
+        "start": "ts-node src/index.ts"
+    },
     "devDependencies": {
         "@commitlint/cli": "^19.3.0",
         "@types/mapbox-gl": "^3",
+        "@types/node": "^22.14.1",
         "@types/react": "latest",
         "@types/react-copy-to-clipboard": "^5.0.7",
         "@types/react-dom": "latest",
         "commitlint": "^19.3.0",
         "cross-env": "^7.0.3",
         "husky": "^9.1.6",
-        "lint-staged": "latest"
+        "lint-staged": "latest",
+        "ts-node": "^10.9.2",
+        "typescript": "^5.8.3"
     },
     "dependencies": {
-        "@ethereum-attestation-service/eas-sdk": "1.6.1"
+        "@ethereum-attestation-service/eas-sdk": "1.6.1",
+        "dotenv": "^16.5.0"
     },
     "resolutions": {
         "ethers": "^6.13.2"
