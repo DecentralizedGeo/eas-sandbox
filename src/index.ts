@@ -1,27 +1,23 @@
 import { EAS, SchemaEncoder } from "@ethereum-attestation-service/eas-sdk";
+import { ethers } from "ethers";
 
-const eas = new EAS(EASContractAddress);
-eas.connect(signer);
+// Ref: https://github.com/ethereum-attestation-service/eas-sdk
+const EASContractAddress = '0xC2679fBD37d54388Ce493F1DB75320D236e1815e'; // Sepolia v0.26
 
-// Initialize SchemaEncoder with the schema string
-const schemaEncoder = new SchemaEncoder("uint256 eventId, uint8 voteIndex");
-const encodedData = schemaEncoder.encodeData([
-    { name: "eventId", value: 1, type: "uint256" },
-    { name: "voteIndex", value: 1, type: "uint8" },
-]);
+async function main() {
+    const eas = new EAS(EASContractAddress);
+    const provider = ethers.getDefaultProvider('sepolia');
 
-const schemaUID = "0xb16fa048b0d597f5a821747eba64efa4762ee5143e9a80600d0005386edfc995";
+    // Create a signer
+    const privateKey = process.env.PRIVATE_KEY;
+    if (!privateKey) throw new Error("set PRIVATE_KEY in .env");
+    const signer = new ethers.Wallet(privateKey, provider);
 
-const tx = await eas.attest({
-    schema: schemaUID,
-    data: {
-        recipient: "0xFD50b031E778fAb33DfD2Fc3Ca66a1EeF0652165",
-        expirationTime: 0,
-        revocable: true, // Be aware that if your schema is not revocable, this MUST be false
-        data: encodedData,
-    },
+    // Connect to EAS with the signer
+    eas.connect(signer);
+}
+
+main().catch((error: any) => {
+    console.error(error);
+    process.exitCode = 1;
 });
-
-const newAttestationUID = await tx.wait();
-
-console.log("New attestation UID:", newAttestationUID);
