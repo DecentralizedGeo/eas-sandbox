@@ -2,7 +2,7 @@
 
 **Note:** This proof of concept uses the sepolia testnet. I highly recommend using a faucet to get test funds. Check out [Google&#39;s Faucet](https://cloud.google.com/application/web3/faucet/ethereum/sepolia)
 
-## RPC Provider API key (e.g., Infura, Alchemy)\
+## RPC Provider API key (e.g., Infura, Alchemy)
 
 Some of the tooling built will require n [Remote Procedure Call](https://www.cyfrin.io/blog/blockchain-rpc-node-guide) provider API key as to interact (read data, send transactions) with blockchain networks (like Ethereum and Sepolia). A RPC provider is a service that runs these nodes and gives you an easy way to connect to the blockchain without running your own node (which can be resource-intensive). Services like [Infura](https://www.infura.io/) and [Alchemy](https://www.alchemy.com/) are popular RPC providers. If you are using [MetaMask](https://metamask.io/) or any other wallet, I recommend creating an account with Infura because of it's integration with MetaMask.
 
@@ -24,10 +24,8 @@ INFURA_API_KEY=<INFURA_API_KEY=YOUR_INFURA_API_KEY_HERE>
 First install dependencies by running
 
 ```bash
-yarn install
+yarn install --frozen-lockfile
 ```
-
-in the root directory.
 
 Then run
 
