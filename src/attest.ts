@@ -1,9 +1,8 @@
 import { EAS, SchemaEncoder } from "@ethereum-attestation-service/eas-sdk";
 import { ethers } from "ethers";
 import * as dotenv from "dotenv";
-
-// let signer = null; // Declare signer variable at the top
-// let provider;
+import { getProviderSigner } from "./provider";
+import { createOnChainAttestation, OnChainAttestationData } from "./eas-attestation";
 
 dotenv.config(); // Load environment variables from .env file
 
@@ -34,49 +33,49 @@ const eas = new EAS(EASContractAddress);
 
 // Initialize Provider and Signer
 console.log(`Connecting to RPC provider at ${rpcProviderUrl}...`);
+// Use ethers.JsonRpcProvider directly for ethers v6+
 const provider = new ethers.JsonRpcProvider(rpcProviderUrl);
 const signer = new ethers.Wallet(privateKey, provider);
 
 // Connect Signer to EAS SDK
 eas.connect(signer as any); // Cast signer to 'any' as a workaround for type incompatibility
 
-async function makeAttestation() {
-    console.log("Initializing attestation process...");
-    console.log(`Using signer address: ${await signer.getAddress()}`);
-    console.log(`Using schema UID: ${schemaUID}`);
-    console.log(`Using schema string: "${schemaString}"`);
-    console.log(`Attesting to recipient: ${recipientAddress}`);
+// Example usage of the modular functions
 
+// Configuration for this specific example
+const exampleSchemaUID = "0xb16fa048b0d597f5a821747eba64efa4762ee5143e9a80600d0005386edfc995"; // Replace with your actual schema UID
+const exampleSchemaString = "uint256 eventId, uint8 voteIndex"; // Replace with your actual schema string
+const exampleRecipient = "0xFD50b031E778fAb33DfD2Fc3Ca66a1EeF0652165"; // Replace if needed
 
-    // Initialize SchemaEncoder with the schema string
-    const schemaEncoder = new SchemaEncoder(schemaString);
-    const encodedData = schemaEncoder.encodeData([
-        // Update these values according to your schemaString
-        { name: "eventId", value: 1, type: "uint256" },
-        { name: "voteIndex", value: 1, type: "uint8" },
-    ]);
+async function runExampleAttestation() {
+    try {
+        // 1. Get the provider and signer
+        const { signer } = getProviderSigner();
 
-    console.log("\nEncoded Schema Data:", encodedData);
+        // 2. Define the attestation data
+        const attestationData: OnChainAttestationData = {
+            recipient: exampleRecipient,
+            expirationTime: 0n, // Use 0n for no expiration (BigInt)
+            revocable: true,
+            schemaUID: exampleSchemaUID,
+            schemaString: exampleSchemaString,
+            dataToEncode: [
+                // Update these values according to your schemaString
+                { name: "eventId", value: 1, type: "uint256" },
+                { name: "voteIndex", value: 1, type: "uint8" },
+            ],
+        };
 
-    const tx = await eas.attest({
-        schema: schemaUID,
-        data: {
-            recipient: recipientAddress,
-            expirationTime: BigInt(0), // No expiration - Changed 0 to 0n
-            revocable: true, // Set to true - Be careful setting this to false
-            data: encodedData,
-        },
-    });
+        // 3. Create the on-chain attestation
+        console.log("\nAttempting to create on-chain attestation...");
+        const newAttestationUID = await createOnChainAttestation(signer, attestationData);
 
-    console.log("\nSubmitting attestation transaction...");
-    const newAttestationUID = await tx.wait();
+        console.log(`\nExample script finished successfully. Attestation UID: ${newAttestationUID}`);
 
-    console.log("\nTransaction submitted and confirmed!");
-    console.log("New attestation UID:", newAttestationUID);
-    console.log(`\nView your attestation at: https://sepolia.easscan.org/attestation/view/${newAttestationUID}`);
+    } catch (error) {
+        console.error("\nError running example attestation script:", error);
+        process.exit(1);
+    }
 }
 
-makeAttestation().catch((error) => {
-    console.error("\nError making attestation:", error);
-    process.exit(1);
-});
+runExampleAttestation();
