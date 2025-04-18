@@ -4,7 +4,7 @@ import { getSchema } from "../eas-schema";
 
 // --- Configuration --- Replace with the UID of a schema you want to fetch
 // const schemaUID = "REPLACE_WITH_SCHEMA_UID"; // Example UID - Replace this!
-const schemaUID = "0x238847e1221a1a5ca60abc68eda91bb2bcd49623819ff275a77cfcdab68a54d1"; // Example UID - Replace this!
+const schemaUID = "0xba4171c92572b1e4f241d044c32cdf083be9fd946b8766977558ca6378c824e2"; // Example UID - Replace this!
 // ---------------------
 
 async function runExampleGetSchema() {
