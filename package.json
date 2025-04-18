@@ -6,13 +6,15 @@
     "scripts": {
         "build": "tsc",
         "start": "ts-node src/attest.ts",
-        "example:onchain": "ts-node src/examples/attest.ts",
+        "example:onchain": "ts-node src/examples/create-onchain-attestation.ts",
         "example:offchain": "ts-node src/examples/create-offchain-attestation.ts",
         "example:fetch": "ts-node src/examples/get-attestation.ts",
         "example:revoke": "ts-node src/examples/revoke-attestation.ts",
-        "test": "echo \"Error: no test specified\" && exit 1",
         "example:register-schema": "ts-node src/examples/register-schema.ts",
-        "example:fetch-schema": "ts-node src/examples/get-schema.ts"
+        "example:fetch-schema": "ts-node src/examples/get-schema.ts",
+        "example:save-offchain": "ts-node src/examples/save-offchain-attestation.ts",
+        "example:load-offchain": "ts-node src/examples/load-offchain-attestations.ts",
+        "test": "echo \"Error: no test specified\" && exit 1"
     },
     "keywords": [
         "eas",
