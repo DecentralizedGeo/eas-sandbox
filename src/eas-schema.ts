@@ -21,6 +21,7 @@ export interface SchemaRecord {
 
 /**
  * Registers a new schema on the EAS SchemaRegistry.
+ * Assumes transaction.wait() directly returns the schema UID string.
  * @param signer - An ethers Signer instance.
  * @param schemaData - The data for the schema to register.
  * @returns {Promise<string>} The UID of the newly registered schema.
@@ -48,22 +49,15 @@ export async function registerSchema(
 
     console.log("Schema registration transaction submitted...");
 
-    // Wait for transaction confirmation and extract the schema UID from logs
-    const receipt = await transaction.wait();
-    if (!receipt) { // || !receipt.logs || receipt.logs.length === 0) {
-        throw new Error("Schema registration transaction failed or logs are missing");
+    // Wait for transaction confirmation - Assuming wait() returns the UID string directly
+    const newSchemaUID = await transaction.wait();
+
+    if (!newSchemaUID || typeof newSchemaUID !== 'string' || !newSchemaUID.startsWith('0x')) {
+        throw new Error(`Schema registration transaction failed or returned an invalid UID: ${newSchemaUID}`);
     }
 
-    // Find the Registered event log to get the UID
-    // Note: This might need adjustment based on the exact event signature in the ABI/SDK version
-    // const registeredEventTopic = ethers.id("Registered(bytes32,address)");
-    // const log = receipt.logs.find(l => l.topics[0] === registeredEventTopic);
+    // Removed the log parsing logic as wait() is assumed to return the UID directly
 
-    // if (!log || !log.topics[1]) {
-    //     throw new Error("Could not find Registered event log or schema UID in transaction receipt");
-    // }
-
-    const newSchemaUID = receipt;
     console.log("Schema registered successfully!");
     console.log("New Schema UID:", newSchemaUID);
     console.log(`View schema at: https://sepolia.easscan.org/schema/view/${newSchemaUID}`);
