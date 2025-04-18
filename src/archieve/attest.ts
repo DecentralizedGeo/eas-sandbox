@@ -1,8 +1,8 @@
 import { EAS, SchemaEncoder } from "@ethereum-attestation-service/eas-sdk";
 import { ethers } from "ethers";
 import * as dotenv from "dotenv";
-import { getProviderSigner } from "./provider";
-import { createOnChainAttestation, OnChainAttestationData } from "./eas-attestation";
+import { getProviderSigner } from "../provider";
+import { createOnChainAttestation, OnChainAttestationData } from "../eas-attestation";
 
 dotenv.config(); // Load environment variables from .env file
 
