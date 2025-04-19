@@ -66,7 +66,7 @@ The following scripts in `src/examples/` demonstrate common EAS interactions:
   - Run with: `yarn example:register-schema`
   - **Note:** You need to edit the script to provide a valid `schema` object.
 
-- **`get-schema.ts`**: 
+- **`fetch-schema.ts`**: 
   - Shows how to fetch the details of an existing schema using its UID.
   - Run with: `yarn example:fetch-schema`
   - **Note:** You need to edit the script to provide a valid `schemaUID`.
