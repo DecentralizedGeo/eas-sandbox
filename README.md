@@ -101,3 +101,22 @@ The following scripts in `src/examples/` demonstrate common EAS interactions:
   - Includes an optional query object within the script that can be uncommented and modified to filter the loaded attestations.
   - Run with: `yarn example:load-offchain`
   - **Note:** The script will print all loaded attestations to the console. You can modify the script to perform additional operations on the loaded attestations.
+
+### Running workflow examples
+
+The following scripts in `src/workflows/` demonstrate end-to-end use cases leveraging the modular EAS functions:
+
+- **`workflow-impact-monitoring.ts`**:
+  - Demonstrates registering the geospatial bounds of an area (e.g., a conservation project) as an on-chain attestation.
+  - Run with: `yarn workflow:impact-monitoring`
+  - **Note:** You may need to edit the script to provide specific schema details or coordinates.
+
+- **`workflow-event-checkin.ts`**:
+  - Simulates an event check-in process where attendance is recorded along with the user's geo-IP location in an attestation.
+  - Run with: `yarn workflow:event-checkin`
+  - **Note:** You may need to edit the script to provide a specific schema UID and recipient address.
+
+- **`workflow-geocaching.ts`**:
+  - Illustrates a geocaching scenario where finding a cache triggers the creation of an attestation containing geospatial metadata.
+  - Run with: `yarn workflow:geocache`
+  - **Note:** You may need to edit the script to provide relevant schema and location details.
