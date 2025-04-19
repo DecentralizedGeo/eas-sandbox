@@ -1,4 +1,4 @@
-import { getSchema } from "../eas-schema";
+import { fetchSchema } from "../eas-schema";
 
 // Example usage of the getSchema function
 
@@ -17,7 +17,7 @@ async function runExampleGetSchema() {
         console.log(`\nAttempting to fetch schema with UID: ${schemaUID}...`);
 
         // Fetch the schema
-        const schemaRecord = await getSchema(schemaUID);
+        const schemaRecord = await fetchSchema(schemaUID);
 
         if (schemaRecord) {
             console.log("\nSchema fetched successfully:");
