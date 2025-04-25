@@ -1,8 +1,12 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import React, { useState, useEffect } from 'react';
 import { ethers } from 'ethers';
-import { EAS, SchemaEncoder, NO_EXPIRATION } from "@ethereum-attestation-service/eas-sdk";
+import { NO_EXPIRATION } from "@ethereum-attestation-service/eas-sdk";
 import './App.css';
+
+// Import helpers
+import { SCHEMA_UID } from './lib/config';
+import { createOnChainAttestation, OnChainAttestationData } from './lib/eas-attestation';
 
 declare global {
   interface Window {
@@ -10,7 +14,6 @@ declare global {
   }
 }
 
-const SCHEMA_UID = "0x1893a6a17c2621355f1912a37fc3918057e41e8534b3fa56963ceafffdce49bf"
 const MOCK_QR_DATA = '[28.3772, 81.5707]'
 
 function App() {
@@ -37,6 +40,11 @@ function App() {
       try {
         // eslint-disable-next-line @typescript-eslint/ban-ts-comment
         // @ts-expect-error
+        if (!window.ethereum || !window.ethereum.isMetaMask) {
+          throw new Error("MetaMask is not installed. Please install it to use this app.");
+        }
+        // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+        // @ts-expect-error
         const provider = new ethers.BrowserProvider(window.ethereum);
         const accounts = await provider.send("eth_requestAccounts", []);
         if (!accounts || accounts.length === 0) {
@@ -54,46 +62,28 @@ function App() {
           return; // Stop if not on Sepolia and not attempting/successful switch
         }
 
-
-        // 2. Initialize EAS
-        const eas = new EAS("0xC2679fBD37d54388Ce493F1DB75320D236e1815e");
-        eas.connect(currentSigner);
-
-        // 3. Prepare Attestation Data
+        // Prepare attestation data
         const time = new Date();
-        const qrDataParsed = JSON.parse(MOCK_QR_DATA); // Use actual QR data here
+        const qrDataParsed = JSON.parse(MOCK_QR_DATA);
 
-        const schemaEncoder = new SchemaEncoder("string lat, string long, string id, string timestamp");
-        const encodedData = schemaEncoder.encodeData([
-          { name: "lat", value: qrDataParsed[0].toString(), type: "string" },
-          { name: "long", value: qrDataParsed[1].toString(), type: "string" },
-          { name: "id", value: (Math.random() * 1000).toString(), type: "string" },
-          { name: "timestamp", value: time.toISOString(), type: "string" } // Use ISO string for consistency
-        ]);
+        // Create attestation data object following the OnChainAttestationData interface
+        const attestationData: OnChainAttestationData = {
+          recipient: currentSigner.address,
+          expirationTime: NO_EXPIRATION,
+          revocable: true,
+          schemaUID: SCHEMA_UID,
+          schemaString: "string lat, string long, string id, string timestamp",
+          dataToEncode: [
+            { name: "lat", value: qrDataParsed[0].toString(), type: "string" },
+            { name: "long", value: qrDataParsed[1].toString(), type: "string" },
+            { name: "id", value: (Math.random() * 1000).toString(), type: "string" },
+            { name: "timestamp", value: time.toISOString(), type: "string" }
+          ]
+        };
 
-        console.log(
-          `Creating attestation with schema UID: ${SCHEMA_UID}, data: ${encodedData}`
-        );
+        const newAttestationUID = await createOnChainAttestation(currentSigner, attestationData);
 
-        // 4. Create Attestation (MetaMask will prompt for signature)
-        const tx = await eas.attest({
-          schema: SCHEMA_UID,
-          data: {
-            recipient: currentSigner.address, // Attest to self or specify recipient
-            expirationTime: NO_EXPIRATION,
-            revocable: true,
-            data: encodedData,
-          }
-        });
-
-        console.log("Transaction sent:", tx.receipt?.hash);
-        setTransactionHash(tx.receipt?.hash || null);
-
-        // 5. Wait for Transaction Confirmation
-        const newAttestationUID = await tx.wait();
-        console.log("Attestation created with UID:", newAttestationUID);
         setAttestationUID(newAttestationUID);
-
       } catch (err: any) {
         console.error("Error during attestation:", err);
         setError(err.message || "An unknown error occurred.");
