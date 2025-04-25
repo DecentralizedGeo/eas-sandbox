@@ -6,15 +6,18 @@
     "scripts": {
         "build": "tsc",
         "start": "ts-node src/attest.ts",
+        "test": "echo \"Error: no test specified\" && exit 1",
         "example:onchain": "ts-node src/examples/create-onchain-attestation.ts",
         "example:offchain": "ts-node src/examples/create-offchain-attestation.ts",
         "example:fetch": "ts-node src/examples/get-attestation.ts",
         "example:revoke": "ts-node src/examples/revoke-attestation.ts",
         "example:register-schema": "ts-node src/examples/register-schema.ts",
-        "example:fetch-schema": "ts-node src/examples/fetch-schema.ts",
+        "example:fetch-schema": "ts-node src/examples/get-schema.ts",
         "example:save-offchain": "ts-node src/examples/save-offchain-attestation.ts",
         "example:load-offchain": "ts-node src/examples/load-offchain-attestations.ts",
-        "test": "echo \"Error: no test specified\" && exit 1"
+        "workflow:impact-monitoring": "ts-node src/workflows/workflow-impact-monitoring.ts",
+        "workflow:event-checkin": "ts-node src/workflows/workflow-event-checkin.ts",
+        "workflow:geocache": "ts-node src/workflows/workflow-geocaching.ts"
     },
     "keywords": [
         "eas",
@@ -27,9 +30,12 @@
     "dependencies": {
         "@ethereum-attestation-service/eas-sdk": "^2.7.0",
         "dotenv": "^16.4.5",
-        "ethers": "^6"
+        "ethers": "^6",
+        "geoip-lite": "^1.4.10",
+        "public-ip": "^7.0.1"
     },
     "devDependencies": {
+        "@types/geoip-lite": "^1.4.4",
         "@types/node": "^20.12.12",
         "ts-node": "^10.9.2",
         "typescript": "^5.4.5"

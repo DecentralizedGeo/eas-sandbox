@@ -61,43 +61,62 @@ A suite of sample examples are provided in the `examples` directory. These examp
 
 The following scripts in `src/examples/` demonstrate common EAS interactions:
 
-- **`register-schema.ts`**: 
+- **`register-schema.ts`**:
   - Demonstrates how to register a new schema on the EAS Schema Registry.
   - Run with: `yarn example:register-schema`
   - **Note:** You need to edit the script to provide a valid `schema` object.
 
-- **`fetch-schema.ts`**: 
+- **`fetch-schema.ts`**:
   - Shows how to fetch the details of an existing schema using its UID.
   - Run with: `yarn example:fetch-schema`
   - **Note:** You need to edit the script to provide a valid `schemaUID`.
 
-- **`create-onchain-attestation.ts`**: 
+- **`create-onchain-attestation.ts`**:
   - Creates a new attestation on-chain using a specific schema.
   - Run with: `yarn example:onchain`
   - **Note:** You need to edit the script to provide a valid `schemaUID` and `recipient` address.
 
-- **`get-attestation.ts`**: 
+- **`get-attestation.ts`**:
   - Fetches the details of an existing on-chain attestation using its UID.
   - Run with: `yarn example:fetch`
   - **Note:** You need to edit the script to provide a valid `attestationUID`.
 
-- **`revoke-attestation.ts`**: 
+- **`revoke-attestation.ts`**:
   - Revokes an existing on-chain attestation.
   - Run with: `yarn example:revoke`
   - **Note:** You need to edit the script to provide the correct `schemaUID` and `attestationUID` to revoke.
 
-- **`create-offchain-attestation.ts`**: 
+- **`create-offchain-attestation.ts`**:
   - Creates and signs an off-chain attestation. The result is printed to the console but not stored automatically by this script.
   - Run with: `yarn example:offchain`
   - **Note:** You need to edit the script to provide a valid `schemaUID` and `recipient` address.
 
-- **`save-offchain-attestation.ts`**: 
+- **`save-offchain-attestation.ts`**:
   - Creates a new signed off-chain attestation and then saves it to the local `offchain-attestations.json` file.
   - Run with: `yarn example:save-offchain`
   - **Note:** The script will create the `offchain-attestations.json` file if it doesn't exist. If it does exist, the new attestation will be appended to the existing list.
 
-- **`load-offchain-attestations.ts`**: 
-  - Loads attestations from the `offchain-attestations.json` file. 
+- **`load-offchain-attestations.ts`**:
+  - Loads attestations from the `offchain-attestations.json` file.
   - Includes an optional query object within the script that can be uncommented and modified to filter the loaded attestations.
   - Run with: `yarn example:load-offchain`
   - **Note:** The script will print all loaded attestations to the console. You can modify the script to perform additional operations on the loaded attestations.
+
+### Running workflow examples
+
+The following scripts in `src/workflows/` demonstrate end-to-end use cases leveraging the modular EAS functions:
+
+- **`workflow-impact-monitoring.ts`**:
+  - Demonstrates registering the geospatial bounds of an area (e.g., a conservation project) as an on-chain attestation.
+  - Run with: `yarn workflow:impact-monitoring`
+  - **Note:** You may need to edit the script to provide specific schema details or coordinates.
+
+- **`workflow-event-checkin.ts`**:
+  - Simulates an event check-in process where attendance is recorded along with the user's geo-IP location in an attestation.
+  - Run with: `yarn workflow:event-checkin`
+  - **Note:** You may need to edit the script to provide a specific schema UID and recipient address.
+
+- **`workflow-geocaching.ts`**:
+  - Illustrates a geocaching scenario that simulates a user scanning a QR code that triggers the creation of an attestation containing geospatial metadata grabbed from the scanned QR code.
+  - Run with: `yarn workflow:geocache`
+  - **Note:** You may need to edit the script to provide relevant schema and location details.
