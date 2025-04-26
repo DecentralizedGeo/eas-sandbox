@@ -1,29 +1,37 @@
-import { displaySchemaDetails } from "../utils/eas-helpers"; // New import for the renamed helper
+import { displaySchemaDetails } from "../utils/eas-helpers"; // Use the display helper
+import { loadFetchSchemaConfig } from "../utils/config-helpers"; // Import the config loader
 
-// Example usage of the displaySchemaDetails helper function
+// Example script name
+const EXAMPLE_SCRIPT_NAME = "fetch-schema";
 
-// --- Configuration --- Replace with the UID of a schema you want to fetch
-// const schemaUID = "REPLACE_WITH_SCHEMA_UID"; // Example UID - Replace this!
-const schemaUID = "0xba4171c92572b1e4f241d044c32cdf083be9fd946b8766977558ca6378c824e2"; // Example UID - Replace this!
-// ---------------------
+// Remove hardcoded configuration constants
+// const schemaUID = "...";
 
 async function runExampleFetchSchema() {
-    if (!schemaUID || schemaUID.startsWith("REPLACE")) {
-        console.error("Error: Please replace the placeholder schemaUID in the script with a real one.");
-        process.exit(1);
-    }
-
     try {
-        console.log(`\nAttempting to fetch and display schema details using displaySchemaDetails helper for UID: ${schemaUID}...`);
+        // --- Load Configuration from YAML ---
+        console.log(`\nLoading configuration for "${EXAMPLE_SCRIPT_NAME}" from examples.yaml...`);
+        const exampleConfigs = loadFetchSchemaConfig(); // Use the specific loader
 
-        // Use the new renamed helper function
-        await displaySchemaDetails(schemaUID);
+        if (!exampleConfigs || exampleConfigs.length === 0) {
+            console.error(`Configuration for "${EXAMPLE_SCRIPT_NAME}" not found or is empty in examples.yaml.`);
+            process.exit(1);
+        }
 
-        // The displaySchemaDetails function now handles the console output internally
-        // console.log("\nSchema details displayed above.");
+        // Process the first config entry.
+        const config = exampleConfigs[0];
+        console.log("Configuration loaded successfully:", config);
+        // ------------------------------------
+
+        console.log(`\nAttempting to fetch and display schema details using displaySchemaDetails helper for UID: ${config.schemaUid}...`);
+
+        // Use the helper function with the UID from config
+        await displaySchemaDetails(config.schemaUid);
+
+        console.log("\nSchema details displayed above (if found).");
 
     } catch (error) {
-        console.error("\nError running example fetch-schema script:", error);
+        console.error(`\nError running example ${EXAMPLE_SCRIPT_NAME} script:`, error);
         process.exit(1);
     }
 }
