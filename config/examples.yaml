@@ -1,0 +1,45 @@
+# Configuration for example scripts
+
+create-onchain-attestation:
+  # Corresponds to the schema: "uint256 eventId, uint8 voteIndex"
+  - schemaUid: "0xb16fa048b0d597f5a821747eba64efa4762ee5143e9a80600d0005386edfc995"
+    schemaString: "uint256 eventId, uint8 voteIndex" # Optional, but good for validation
+    recipient: "0xFD50b031E778fAb33DfD2Fc3Ca66a1EeF0652165" # Optional, defaults to ZeroAddress if omitted
+    revocable: true # Optional, defaults to true
+    expirationTime: 0 # Optional, defaults to 0 (no expiration). Use string for large BigInts if needed.
+    # referenceUid: "0x..." # Optional: Add if creating a chained attestation
+    fields:
+      eventId: 12345 # Value for the 'eventId' field (uint256)
+      voteIndex: 1 # Value for the 'voteIndex' field (uint8)
+
+create-offchain-attestation:
+  # Corresponds to the schema: "uint256 eventId, uint8 voteIndex"
+  - schemaUid: "0xb16fa048b0d597f5a821747eba64efa4762ee5143e9a80600d0005386edfc995"
+    schemaString: "uint256 eventId, uint8 voteIndex"
+    recipient: "0xFD50b031E778fAb33DfD2Fc3Ca66a1EeF0652165"
+    revocable: true
+    expirationTime: 0
+    fields:
+      eventId: 999 # Different example data
+      voteIndex: 2 # Different example data
+
+register-schema:
+  - schema: "uint256 eventId, uint8 voteIndex" # Schema string to register
+    revocable: true # Whether attestations using this schema are revocable
+    # resolverAddress: "0x..." # Optional: Address of a resolver contract
+
+fetch-schema:
+  - schemaUid: "0xb16fa048b0d597f5a821747eba64efa4762ee5143e9a80600d0005386edfc995" # UID of the schema to fetch
+
+get-attestation:
+  - attestationUid: "0x0000000000000000000000000000000000000000000000000000000000000000" # UID of the attestation to fetch - REPLACE WITH A REAL UID
+
+revoke-attestation:
+  - schemaUid: "0xb16fa048b0d597f5a821747eba64efa4762ee5143e9a80600d0005386edfc995" # Schema UID of the attestation to revoke
+    attestationUid: "0x0000000000000000000000000000000000000000000000000000000000000000" # UID of the attestation to revoke - REPLACE WITH A REAL UID
+
+# Add other example script configurations here, keyed by script name (without .ts)
+# e.g.:
+# register-schema:
+#   - schema: "string message"
+#     revocable: false
