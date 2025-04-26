@@ -1,36 +1,50 @@
 import { getProviderSigner } from "../provider";
 import { registerSchema, SchemaRegistrationData } from "../eas-schema";
-import { ethers } from "ethers";
+import { loadRegisterSchemaConfig } from "../utils/config-helpers"; // Import the config loader
 
-// Example usage of the registerSchema function
+// Example script name
+const EXAMPLE_SCRIPT_NAME = "register-schema";
 
-// --- Configuration --- Define the schema you want to register
-const newSchemaString = "uint256 voteId, bool isYesVote, string comment"; // Example schema - Replace or modify
-const newSchemaResolver = ethers.ZeroAddress; // Optional: Replace with your resolver address if needed
-const newSchemaRevocable = true;
-// ---------------------
+// Remove hardcoded configuration constants
+// const schemaString = "...";
+// const resolverAddress = "...";
+// const revocable = ...;
 
 async function runExampleRegisterSchema() {
     try {
+        // --- Load Configuration from YAML ---
+        console.log(`\nLoading configuration for "${EXAMPLE_SCRIPT_NAME}" from examples.yaml...`);
+        const exampleConfigs = loadRegisterSchemaConfig(); // Use the specific loader
+
+        if (!exampleConfigs || exampleConfigs.length === 0) {
+            console.error(`Configuration for "${EXAMPLE_SCRIPT_NAME}" not found or is empty in examples.yaml.`);
+            process.exit(1);
+        }
+
+        // For this example, process the first config entry.
+        // Could be extended to register multiple schemas in a loop.
+        const config = exampleConfigs[0];
+        console.log("Configuration loaded successfully:", config);
+        // ------------------------------------
+
         // 1. Get the provider and signer
         const { signer } = getProviderSigner();
-        console.log(`\nUsing signer: ${signer.address} to register schema.`);
 
-        // 2. Define the schema registration data
+        // 2. Define the schema registration data from config
         const schemaData: SchemaRegistrationData = {
-            schema: newSchemaString,
-            resolverAddress: newSchemaResolver,
-            revocable: newSchemaRevocable,
+            schema: config.schema,
+            resolverAddress: config.resolverAddress, // Already defaulted in loader
+            revocable: config.revocable, // Already defaulted in loader
         };
 
         // 3. Register the schema
-        console.log(`\nAttempting to register schema: "${newSchemaString}"...`);
+        console.log("\nAttempting to register schema...");
         const newSchemaUID = await registerSchema(signer, schemaData);
 
-        console.log(`\nExample script finished successfully. New schema registered with UID: ${newSchemaUID}`);
+        console.log(`\nExample script finished successfully. Schema UID: ${newSchemaUID}`);
 
     } catch (error) {
-        console.error("\nError running example registerSchema script:", error);
+        console.error(`\nError running example ${EXAMPLE_SCRIPT_NAME} script:`, error);
         process.exit(1);
     }
 }
