@@ -1,6 +1,8 @@
 import { getProviderSigner } from "../provider";
 import { createOnChainAttestation, OnChainAttestationData } from "../eas-attestation";
 import { ethers } from "ethers";
+import { validateAttestationData } from "../utils/eas-helpers"; // Import the validator
+import { fetchSchema } from "../eas-schema"; // Import fetchSchema
 
 // Example usage of the createOnChainAttestation function
 
@@ -28,6 +30,39 @@ async function runExampleOnChainAttestation() {
                 { name: "voteIndex", value: 1, type: "uint8" },
             ],
         };
+
+        // --- Schema String Validation Step ---
+        console.log(`\nFetching schema record for UID: ${attestationData.schemaUID} to verify schema string...`);
+        const schemaRecord = await fetchSchema(attestationData.schemaUID);
+
+        if (!schemaRecord) {
+            console.error("Failed to fetch schema record. Aborting creation.");
+            process.exit(1);
+        }
+
+        if (schemaRecord.schema !== attestationData.schemaString) {
+            console.error(`Schema string mismatch! Provided: "${attestationData.schemaString}", On-chain: "${schemaRecord.schema}". Aborting.`);
+            process.exit(1);
+        }
+        console.log("Schema string matches the on-chain record.");
+        // -------------------------------------
+
+        // --- Data Validation Step (FR10) ---
+        console.log("\nValidating attestation data against schema...");
+        // Convert dataToEncode array to a simple key-value object for validation
+        const dataObject = attestationData.dataToEncode.reduce((acc, item) => {
+            acc[item.name] = item.value;
+            return acc;
+        }, {} as Record<string, any>);
+
+        const isValid = validateAttestationData(attestationData.schemaString, dataObject);
+
+        if (!isValid) {
+            console.error("Attestation data validation failed. Aborting creation.");
+            process.exit(1);
+        }
+        console.log("Data validation successful.");
+        // -------------------------------------
 
         // 3. Create the on-chain attestation
         console.log("\nAttempting to create on-chain attestation...");
