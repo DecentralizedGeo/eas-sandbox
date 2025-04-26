@@ -12,7 +12,7 @@
         "example:fetch": "ts-node src/examples/get-attestation.ts",
         "example:revoke": "ts-node src/examples/revoke-attestation.ts",
         "example:register-schema": "ts-node src/examples/register-schema.ts",
-        "example:fetch-schema": "ts-node src/examples/get-schema.ts",
+        "example:fetch-schema": "ts-node src/examples/fetch-schema.ts",
         "example:save-offchain": "ts-node src/examples/save-offchain-attestation.ts",
         "example:load-offchain": "ts-node src/examples/load-offchain-attestations.ts",
         "workflow:impact-monitoring": "ts-node src/workflows/workflow-impact-monitoring.ts",
