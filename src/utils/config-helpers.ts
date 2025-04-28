@@ -7,7 +7,6 @@ import { ethers } from 'ethers';
 // Includes all possible fields used across different example scripts.
 export interface BaseConfig {
     // Schema related
-    schema?: string | null;          // For register-schema
     schemaUid?: string | null;       // For attestations, fetch, revoke
     schemaString?: string | null;    // Optional validation hint
 
@@ -72,63 +71,45 @@ export function loadFullConfig(configFilename: string = "examples.yaml"): Exampl
 
         const processedConfig: ExamplesConfig = {};
 
-        // Iterate through each script name (key) in the raw data
         for (const scriptName in rawData) {
-            if (Object.prototype.hasOwnProperty.call(rawData, scriptName)) {
-                const rawConfigsArray = (rawData as any)[scriptName];
+            if (!Object.prototype.hasOwnProperty.call(rawData, scriptName)) continue;
+            const rawConfigsArray = (rawData as any)[scriptName];
+            if (!Array.isArray(rawConfigsArray)) continue;
 
-                if (!Array.isArray(rawConfigsArray)) {
-                    console.warn(`Warning: Configuration for "${scriptName}" in ${configFilename} is not an array. Skipping.`);
-                    continue;
-                }
-
-                // Process each config object within the array
-                processedConfig[scriptName] = rawConfigsArray.map((rawConfig: any, index: number): BaseConfig => {
-                    if (typeof rawConfig !== 'object' || rawConfig === null) {
-                        console.warn(`Warning: Invalid item at index ${index} for script "${scriptName}". Skipping.`);
-                        // Return a default empty object or handle as needed
-                        return {}; // Or throw an error if invalid items are critical
-                    }
-
-                    // Convert expirationTime to BigInt, applying default if necessary
-                    let expirationTimeBigInt: bigint;
-                    const rawExpirationTime = rawConfig.expirationTime;
-                    if (rawExpirationTime === undefined || rawExpirationTime === null) {
-                        expirationTimeBigInt = DEFAULT_CONFIG_EXPIRATION_TIME;
-                    } else {
-                        try {
-                            expirationTimeBigInt = BigInt(rawExpirationTime);
-                        } catch (e) {
-                            console.warn(`Warning for ${scriptName}[${index}]: Invalid 'expirationTime' value: ${rawExpirationTime}. Using default ${DEFAULT_CONFIG_EXPIRATION_TIME}.`);
-                            expirationTimeBigInt = DEFAULT_CONFIG_EXPIRATION_TIME;
-                        }
-                    }
-
-                    // Apply defaults using nullish coalescing operator (??)
-                    const processed: BaseConfig = {
+            processedConfig[scriptName] = rawConfigsArray.map((rawConfig: any) => {
+                // If this config has an 'attestations' array, process each attestation
+                if (Array.isArray(rawConfig.attestations)) {
+                    return {
+                        ...rawConfig,
+                        attestations: rawConfig.attestations.map((att: any) => ({
+                            schemaUid: att.schemaUid ?? DEFAULT_CONFIG_SCHEMA_UID,
+                            schemaString: att.schemaString ?? DEFAULT_CONFIG_SCHEMA_STRING,
+                            fields: att.fields ?? DEFAULT_CONFIG_FIELDS,
+                            recipient: att.recipient ?? DEFAULT_CONFIG_RECIPIENT,
+                            revocable: att.revocable ?? DEFAULT_CONFIG_REVOCABLE,
+                            expirationTime: att.expirationTime !== undefined ? BigInt(att.expirationTime) : DEFAULT_CONFIG_EXPIRATION_TIME,
+                            referenceUid: att.referenceUid ?? DEFAULT_CONFIG_REF_UID,
+                            privateData: att.privateData ?? DEFAULT_CONFIG_PRIVATE_DATA,
+                            attestationUid: att.attestationUid ?? DEFAULT_CONFIG_ATTESTATION_UID,
+                            resolverAddress: att.resolverAddress ?? DEFAULT_CONFIG_RESOLVER,
+                        }))
+                    };
+                } else {
+                    // Single attestation config (legacy/other scripts)
+                    return {
                         schemaUid: rawConfig.schemaUid ?? DEFAULT_CONFIG_SCHEMA_UID,
                         schemaString: rawConfig.schemaString ?? DEFAULT_CONFIG_SCHEMA_STRING,
                         fields: rawConfig.fields ?? DEFAULT_CONFIG_FIELDS,
                         recipient: rawConfig.recipient ?? DEFAULT_CONFIG_RECIPIENT,
                         revocable: rawConfig.revocable ?? DEFAULT_CONFIG_REVOCABLE,
-                        expirationTime: expirationTimeBigInt, // Already processed
+                        expirationTime: rawConfig.expirationTime !== undefined ? BigInt(rawConfig.expirationTime) : DEFAULT_CONFIG_EXPIRATION_TIME,
                         referenceUid: rawConfig.referenceUid ?? DEFAULT_CONFIG_REF_UID,
                         privateData: rawConfig.privateData ?? DEFAULT_CONFIG_PRIVATE_DATA,
                         attestationUid: rawConfig.attestationUid ?? DEFAULT_CONFIG_ATTESTATION_UID,
                         resolverAddress: rawConfig.resolverAddress ?? DEFAULT_CONFIG_RESOLVER,
                     };
-
-                    // Specific check for placeholder UIDs - log warning, let core functions validate
-                    if (processed.attestationUid === ethers.ZeroHash) {
-                        console.warn(`Warning for ${scriptName}[${index}]: 'attestationUid' is set to ZeroHash. Ensure this is intended or replace the placeholder.`);
-                    }
-                    if (processed.referenceUid === ethers.ZeroHash && rawConfig.referenceUid !== undefined) {
-                        console.warn(`Warning for ${scriptName}[${index}]: 'referenceUid' is set to ZeroHash. Ensure this is intended or replace the placeholder.`);
-                    }
-
-                    return processed;
-                });
-            }
+                }
+            });
         }
 
         console.log("Configuration processed with defaults applied.");
@@ -139,10 +120,3 @@ export function loadFullConfig(configFilename: string = "examples.yaml"): Exampl
         return null;
     }
 }
-
-// Removed specific loader functions:
-// - loadExampleConfig
-// - loadRegisterSchemaConfig
-// - loadFetchSchemaConfig
-// - loadGetAttestationConfig
-// - loadRevokeAttestationConfig
