@@ -1,64 +1,54 @@
 import * as fs from 'fs';
 import * as yaml from 'js-yaml';
 import * as path from 'path';
-import { ethers } from 'ethers'; // Import ethers for default values
+import { ethers } from 'ethers';
 
-// Interface for a single attestation configuration within an example/workflow
-export interface AttestationConfig {
-    schemaUid: string;
-    schemaString?: string; // Optional, but useful for validation
-    fields: Record<string, any>; // Key-value pairs for schema fields
-    revocable?: boolean; // Default: true
-    expirationTime?: bigint //| number | string; // Allow various inputs, convert later
-    recipient?: string; // Default: ethers.ZeroAddress
-    referenceUid?: string; // Optional
-    privateData?: any; // Placeholder for private data structure
-    // Add other common fields as needed
+// --- Unified Base Configuration Interface ---
+// Includes all possible fields used across different example scripts.
+export interface BaseConfig {
+    // Schema related
+    schema?: string | null;          // For register-schema
+    schemaUid?: string | null;       // For attestations, fetch, revoke
+    schemaString?: string | null;    // Optional validation hint
+
+    // Attestation data
+    fields?: Record<string, any> | null; // For attestations
+    recipient?: string | null;       // For attestations
+    revocable?: boolean;             // For attestations, register-schema
+    expirationTime?: bigint;         // For attestations (always converted to BigInt)
+    referenceUid?: string | null;    // For attestations
+    privateData?: any | null;        // For private attestations
+
+    // Other identifiers
+    attestationUid?: string | null;  // For get, revoke
+    resolverAddress?: string | null; // For register-schema
 }
 
-// New Interface for RegisterSchema
-export interface RegisterSchemaConfig {
-    schema: string;
-    resolverAddress?: string;
-    revocable: boolean; // Make required for clarity in config
-}
+// --- Default Values --- (Using more specific names to avoid conflicts)
+const DEFAULT_CONFIG_SCHEMA_UID: string | null = null;
+const DEFAULT_CONFIG_SCHEMA_STRING: string | null = null;
+const DEFAULT_CONFIG_FIELDS: Record<string, any> | null = null;
+const DEFAULT_CONFIG_RECIPIENT: string = ethers.ZeroAddress;
+const DEFAULT_CONFIG_REVOCABLE: boolean = true;
+const DEFAULT_CONFIG_EXPIRATION_TIME: bigint = 0n;
+const DEFAULT_CONFIG_REF_UID: string = ethers.ZeroHash;
+const DEFAULT_CONFIG_PRIVATE_DATA: any | null = null;
+const DEFAULT_CONFIG_ATTESTATION_UID: string | null = null;
+const DEFAULT_CONFIG_RESOLVER: string = ethers.ZeroAddress;
 
-// New Interface for FetchSchema
-export interface FetchSchemaConfig {
-    schemaUid: string;
-}
-
-// New Interface for GetAttestation
-export interface GetAttestationConfig {
-    attestationUid: string;
-}
-
-// New Interface for RevokeAttestation
-export interface RevokeAttestationConfig {
-    schemaUid: string;
-    attestationUid: string;
-}
-
-// Interface for the entire examples config file structure
-// Keys are example script names (e.g., "create-onchain-attestation")
+// --- Interface for the entire examples config file structure ---
+// Values are now arrays of BaseConfig after processing.
 export interface ExamplesConfig {
-    [exampleName: string]: any[];
+    [exampleName: string]: BaseConfig[];
 }
-
-/** Default values for attestation config */
-const DEFAULT_REVOCABLE = true;
-const DEFAULT_EXPIRATION_TIME = 0n; // Use BigInt for consistency
-const DEFAULT_RECIPIENT = ethers.ZeroAddress;
-const DEFAULT_REF_UID = ethers.ZeroHash;
-const DEFAULT_RESOLVER = ethers.ZeroAddress; // Default for schema registration
 
 /**
- * Loads and parses the examples YAML configuration file.
+ * Loads and parses the specified YAML configuration file, applying default values.
  * @param configFilename The name of the config file (e.g., "examples.yaml") in the 'config' directory.
- * @returns The parsed examples configuration object, or null if an error occurs.
+ * @returns The parsed and processed examples configuration object, or null if an error occurs.
  */
-function loadFullConfig(configFilename: string): ExamplesConfig | null {
-    const configDir = path.resolve(__dirname, '../../config'); // Updated directory name
+export function loadFullConfig(configFilename: string = "examples.yaml"): ExamplesConfig | null {
+    const configDir = path.resolve(__dirname, '../../config');
     const filePath = path.join(configDir, configFilename);
 
     console.log(`Attempting to load configuration from: ${filePath}`);
@@ -70,172 +60,89 @@ function loadFullConfig(configFilename: string): ExamplesConfig | null {
         }
 
         const fileContents = fs.readFileSync(filePath, 'utf8');
-        const data = yaml.load(fileContents);
+        // Load raw data from YAML
+        const rawData = yaml.load(fileContents);
 
-        // Basic validation (can be expanded)
-        if (typeof data !== 'object' || data === null) {
+        if (typeof rawData !== 'object' || rawData === null) {
             console.error(`Error: Invalid config structure in ${configFilename}. Expected a top-level object.`);
             return null;
         }
 
-        console.log(`Successfully loaded and parsed config file: ${configFilename}`);
-        // TODO: Add more robust validation/parsing for specific fields (e.g., BigInt conversion for expirationTime)
-        return data as ExamplesConfig;
+        console.log(`Successfully loaded raw config file: ${configFilename}`);
 
-    } catch (error) {
-        console.error(`Error loading or parsing config file ${configFilename}:`, error);
-        return null;
-    }
-}
+        const processedConfig: ExamplesConfig = {};
 
-/**
- * Loads the configuration for a specific example script from the examples.yaml file.
- * Applies default values for optional fields.
- * @param exampleScriptName The name of the script (e.g., "create-onchain-attestation").
- * @returns An array of AttestationConfig objects for the specified script, or null if not found or error.
- */
-export function loadExampleConfig(exampleScriptName: string): AttestationConfig[] | null {
-    const fullConfig = loadFullConfig("examples.yaml");
+        // Iterate through each script name (key) in the raw data
+        for (const scriptName in rawData) {
+            if (Object.prototype.hasOwnProperty.call(rawData, scriptName)) {
+                const rawConfigsArray = (rawData as any)[scriptName];
 
-    if (!fullConfig || !(exampleScriptName in fullConfig)) {
-        console.error(`Error: Configuration for example "${exampleScriptName}" not found in examples.yaml.`);
-        return null;
-    }
+                if (!Array.isArray(rawConfigsArray)) {
+                    console.warn(`Warning: Configuration for "${scriptName}" in ${configFilename} is not an array. Skipping.`);
+                    continue;
+                }
 
-    const configs = fullConfig[exampleScriptName];
+                // Process each config object within the array
+                processedConfig[scriptName] = rawConfigsArray.map((rawConfig: any, index: number): BaseConfig => {
+                    if (typeof rawConfig !== 'object' || rawConfig === null) {
+                        console.warn(`Warning: Invalid item at index ${index} for script "${scriptName}". Skipping.`);
+                        // Return a default empty object or handle as needed
+                        return {}; // Or throw an error if invalid items are critical
+                    }
 
-    // Apply defaults and perform basic type conversions/validations
-    return configs.map((config, index) => {
-        // Basic validation
-        if (!config.schemaUid || typeof config.schemaUid !== 'string') {
-            throw new Error(`Validation Error in examples.yaml for ${exampleScriptName}[${index}]: Missing or invalid 'schemaUid'.`);
-        }
-        if (!config.fields || typeof config.fields !== 'object') {
-            throw new Error(`Validation Error in examples.yaml for ${exampleScriptName}[${index}]: Missing or invalid 'fields'.`);
-        }
+                    // Convert expirationTime to BigInt, applying default if necessary
+                    let expirationTimeBigInt: bigint;
+                    const rawExpirationTime = rawConfig.expirationTime;
+                    if (rawExpirationTime === undefined || rawExpirationTime === null) {
+                        expirationTimeBigInt = DEFAULT_CONFIG_EXPIRATION_TIME;
+                    } else {
+                        try {
+                            expirationTimeBigInt = BigInt(rawExpirationTime);
+                        } catch (e) {
+                            console.warn(`Warning for ${scriptName}[${index}]: Invalid 'expirationTime' value: ${rawExpirationTime}. Using default ${DEFAULT_CONFIG_EXPIRATION_TIME}.`);
+                            expirationTimeBigInt = DEFAULT_CONFIG_EXPIRATION_TIME;
+                        }
+                    }
 
-        // Convert expirationTime to BigInt
-        let expirationTimeBigInt: bigint;
-        if (config.expirationTime === undefined || config.expirationTime === null) {
-            expirationTimeBigInt = DEFAULT_EXPIRATION_TIME;
-        } else {
-            try {
-                expirationTimeBigInt = BigInt(config.expirationTime);
-            } catch (e) {
-                throw new Error(`Validation Error in examples.yaml for ${exampleScriptName}[${index}]: Invalid 'expirationTime' value: ${config.expirationTime}. Must be convertible to BigInt.`);
+                    // Apply defaults using nullish coalescing operator (??)
+                    const processed: BaseConfig = {
+                        schemaUid: rawConfig.schemaUid ?? DEFAULT_CONFIG_SCHEMA_UID,
+                        schemaString: rawConfig.schemaString ?? DEFAULT_CONFIG_SCHEMA_STRING,
+                        fields: rawConfig.fields ?? DEFAULT_CONFIG_FIELDS,
+                        recipient: rawConfig.recipient ?? DEFAULT_CONFIG_RECIPIENT,
+                        revocable: rawConfig.revocable ?? DEFAULT_CONFIG_REVOCABLE,
+                        expirationTime: expirationTimeBigInt, // Already processed
+                        referenceUid: rawConfig.referenceUid ?? DEFAULT_CONFIG_REF_UID,
+                        privateData: rawConfig.privateData ?? DEFAULT_CONFIG_PRIVATE_DATA,
+                        attestationUid: rawConfig.attestationUid ?? DEFAULT_CONFIG_ATTESTATION_UID,
+                        resolverAddress: rawConfig.resolverAddress ?? DEFAULT_CONFIG_RESOLVER,
+                    };
+
+                    // Specific check for placeholder UIDs - log warning, let core functions validate
+                    if (processed.attestationUid === ethers.ZeroHash) {
+                        console.warn(`Warning for ${scriptName}[${index}]: 'attestationUid' is set to ZeroHash. Ensure this is intended or replace the placeholder.`);
+                    }
+                    if (processed.referenceUid === ethers.ZeroHash && rawConfig.referenceUid !== undefined) {
+                        console.warn(`Warning for ${scriptName}[${index}]: 'referenceUid' is set to ZeroHash. Ensure this is intended or replace the placeholder.`);
+                    }
+
+                    return processed;
+                });
             }
         }
 
-        return {
-            ...config, // Keep original fields
-            revocable: config.revocable ?? DEFAULT_REVOCABLE,
-            expirationTime: expirationTimeBigInt,
-            recipient: config.recipient ?? DEFAULT_RECIPIENT,
-            referenceUid: config.referenceUid ?? DEFAULT_REF_UID,
-            // Ensure fields is present (already checked above)
-            fields: config.fields,
-        };
-    });
-}
+        console.log("Configuration processed with defaults applied.");
+        return processedConfig;
 
-/**
- * Loads the configuration for the register-schema example script.
- * @param exampleScriptName The name of the script ("register-schema").
- * @returns An array of RegisterSchemaConfig objects, or null if not found or error.
- */
-export function loadRegisterSchemaConfig(exampleScriptName: string = "register-schema"): RegisterSchemaConfig[] | null {
-    const fullConfig = loadFullConfig("examples.yaml");
-    if (!fullConfig || !(exampleScriptName in fullConfig)) {
-        console.error(`Error: Configuration for example "${exampleScriptName}" not found in examples.yaml.`);
+    } catch (error) {
+        console.error(`Error loading or processing config file ${configFilename}:`, error);
         return null;
     }
-    const configs = fullConfig[exampleScriptName];
-
-    return configs.map((config: any, index: number) => {
-        if (!config.schema || typeof config.schema !== 'string') {
-            throw new Error(`Validation Error in examples.yaml for ${exampleScriptName}[${index}]: Missing or invalid 'schema'.`);
-        }
-        if (typeof config.revocable !== 'boolean') {
-            console.warn(`Validation Warning in examples.yaml for ${exampleScriptName}[${index}]: Missing or invalid 'revocable', defaulting to ${DEFAULT_REVOCABLE}.`);
-        }
-
-        return {
-            schema: config.schema,
-            revocable: config.revocable ?? DEFAULT_REVOCABLE,
-            resolverAddress: config.resolverAddress ?? DEFAULT_RESOLVER,
-        };
-    });
 }
 
-/**
- * Loads the configuration for the fetch-schema example script.
- * @param exampleScriptName The name of the script ("fetch-schema").
- * @returns An array of FetchSchemaConfig objects, or null if not found or error.
- */
-export function loadFetchSchemaConfig(exampleScriptName: string = "fetch-schema"): FetchSchemaConfig[] | null {
-    const fullConfig = loadFullConfig("examples.yaml");
-    if (!fullConfig || !(exampleScriptName in fullConfig)) {
-        console.error(`Error: Configuration for example "${exampleScriptName}" not found in examples.yaml.`);
-        return null;
-    }
-    const configs = fullConfig[exampleScriptName];
-
-    return configs.map((config: any, index: number) => {
-        if (!config.schemaUid || typeof config.schemaUid !== 'string' || !config.schemaUid.startsWith('0x')) {
-            throw new Error(`Validation Error in examples.yaml for ${exampleScriptName}[${index}]: Missing or invalid 'schemaUid'.`);
-        }
-        return {
-            schemaUid: config.schemaUid,
-        };
-    });
-}
-
-/**
- * Loads the configuration for the get-attestation example script.
- * @param exampleScriptName The name of the script ("get-attestation").
- * @returns An array of GetAttestationConfig objects, or null if not found or error.
- */
-export function loadGetAttestationConfig(exampleScriptName: string = "get-attestation"): GetAttestationConfig[] | null {
-    const fullConfig = loadFullConfig("examples.yaml");
-    if (!fullConfig || !(exampleScriptName in fullConfig)) {
-        console.error(`Error: Configuration for example "${exampleScriptName}" not found in examples.yaml.`);
-        return null;
-    }
-    const configs = fullConfig[exampleScriptName];
-
-    return configs.map((config: any, index: number) => {
-        if (!config.attestationUid || typeof config.attestationUid !== 'string' || !config.attestationUid.startsWith('0x') || config.attestationUid === ethers.ZeroHash) {
-            throw new Error(`Validation Error in examples.yaml for ${exampleScriptName}[${index}]: Missing or invalid 'attestationUid'. Please replace the placeholder value.`);
-        }
-        return {
-            attestationUid: config.attestationUid,
-        };
-    });
-}
-
-/**
- * Loads the configuration for the revoke-attestation example script.
- * @param exampleScriptName The name of the script ("revoke-attestation").
- * @returns An array of RevokeAttestationConfig objects, or null if not found or error.
- */
-export function loadRevokeAttestationConfig(exampleScriptName: string = "revoke-attestation"): RevokeAttestationConfig[] | null {
-    const fullConfig = loadFullConfig("examples.yaml");
-    if (!fullConfig || !(exampleScriptName in fullConfig)) {
-        console.error(`Error: Configuration for example "${exampleScriptName}" not found in examples.yaml.`);
-        return null;
-    }
-    const configs = fullConfig[exampleScriptName];
-
-    return configs.map((config: any, index: number) => {
-        if (!config.schemaUid || typeof config.schemaUid !== 'string' || !config.schemaUid.startsWith('0x')) {
-            throw new Error(`Validation Error in examples.yaml for ${exampleScriptName}[${index}]: Missing or invalid 'schemaUid'.`);
-        }
-        if (!config.attestationUid || typeof config.attestationUid !== 'string' || !config.attestationUid.startsWith('0x') || config.attestationUid === ethers.ZeroHash) {
-            throw new Error(`Validation Error in examples.yaml for ${exampleScriptName}[${index}]: Missing or invalid 'attestationUid'. Please replace the placeholder value.`);
-        }
-        return {
-            schemaUid: config.schemaUid,
-            attestationUid: config.attestationUid,
-        };
-    });
-}
+// Removed specific loader functions:
+// - loadExampleConfig
+// - loadRegisterSchemaConfig
+// - loadFetchSchemaConfig
+// - loadGetAttestationConfig
+// - loadRevokeAttestationConfig
