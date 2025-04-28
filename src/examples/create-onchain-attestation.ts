@@ -1,33 +1,44 @@
 import { getProviderSigner } from "../provider";
 import { createOnChainAttestation, OnChainAttestationData } from "../eas-attestation";
 import { ethers } from "ethers";
-import { validateAttestationData } from "../utils/eas-helpers"; // Keep data validator
-import { fetchSchema } from "../eas-schema"; // Keep schema fetcher
-import { loadExampleConfig } from "../utils/config-helpers"; // Import the config loader
+import { validateAttestationData } from "../utils/eas-helpers";
+import { fetchSchema } from "../eas-schema";
+import { loadFullConfig, BaseConfig } from "../utils/config-helpers"; // Import loadFullConfig and BaseConfig
 
-// Example script name, used to load config from examples.yaml
+// Example script name, used as key in examples.yaml
 const EXAMPLE_SCRIPT_NAME = "create-onchain-attestation";
-
-// Remove hardcoded configuration constants
-// const exampleSchemaUID = "...";
-// const exampleSchemaString = "...";
-// const exampleRecipient = "...";
 
 async function runExampleOnChainAttestation() {
     try {
-        // --- Load Configuration from YAML ---
-        console.log(`\nLoading configuration for "${EXAMPLE_SCRIPT_NAME}" from examples.yaml...`);
-        const exampleConfigs = loadExampleConfig(EXAMPLE_SCRIPT_NAME);
+        // --- Load Full Configuration from YAML ---
+        console.log(`\nLoading full configuration from examples.yaml...`);
+        const fullConfig = loadFullConfig();
+        if (!fullConfig) {
+            console.error("Failed to load configuration.");
+            process.exit(1);
+        }
 
-        if (!exampleConfigs || exampleConfigs.length === 0) {
+        // --- Get Config for this specific script ---
+        const scriptConfigs = fullConfig[EXAMPLE_SCRIPT_NAME];
+        if (!scriptConfigs || scriptConfigs.length === 0) {
             console.error(`Configuration for "${EXAMPLE_SCRIPT_NAME}" not found or is empty in examples.yaml.`);
             process.exit(1);
         }
 
-        // For this example, we assume the first config entry is the one we want to use.
-        // Future examples might loop through multiple configs.
-        const config = exampleConfigs[0];
-        console.log("Configuration loaded successfully:", config);
+        // For this example, we use the first config entry.
+        const config: BaseConfig = scriptConfigs[0];
+        console.log(`Using configuration for "${EXAMPLE_SCRIPT_NAME}":`, config);
+        // ------------------------------------
+
+        // --- Script-Specific Validation ---
+        if (!config.schemaUid || typeof config.schemaUid !== 'string' || !config.schemaUid.startsWith('0x')) {
+            console.error(`Error: Invalid or missing 'schemaUid' in config for ${EXAMPLE_SCRIPT_NAME}.`);
+            process.exit(1);
+        }
+        if (!config.fields || typeof config.fields !== 'object' || Object.keys(config.fields).length === 0) {
+            console.error(`Error: Invalid or missing 'fields' in config for ${EXAMPLE_SCRIPT_NAME}.`);
+            process.exit(1);
+        }
         // ------------------------------------
 
         // 1. Get the provider and signer
@@ -35,7 +46,7 @@ async function runExampleOnChainAttestation() {
 
         // --- Schema String Validation Step (using config) ---
         console.log(`\nFetching schema record for UID: ${config.schemaUid} to verify schema string...`);
-        const schemaRecord = await fetchSchema(config.schemaUid);
+        const schemaRecord = await fetchSchema(config.schemaUid); // Pass validated schemaUid
 
         if (!schemaRecord) {
             console.error("Failed to fetch schema record. Aborting creation.");
@@ -46,15 +57,13 @@ async function runExampleOnChainAttestation() {
         const schemaStringToValidate = config.schemaString ?? schemaRecord.schema;
         if (schemaRecord.schema !== schemaStringToValidate) {
             console.warn(`Warning: Schema string in config ("${config.schemaString}") does not match on-chain record ("${schemaRecord.schema}"). Using on-chain schema for validation.`);
-            // Decide if this should be a hard error or just a warning
-            // For now, proceed with on-chain schema but log warning.
         }
         console.log("Using schema string for validation:", schemaRecord.schema);
         // -------------------------------------
 
         // --- Data Validation Step (FR10 - using config) ---
         console.log("\nValidating attestation data against schema...");
-        // Use the fields directly from the config object
+        // Use the validated fields directly from the config object
         const isValid = validateAttestationData(schemaRecord.schema, config.fields);
 
         if (!isValid) {
@@ -76,12 +85,12 @@ async function runExampleOnChainAttestation() {
         });
 
         const attestationData: OnChainAttestationData = {
-            recipient: config.recipient!, // Use non-null assertion as defaults are applied
-            expirationTime: config.expirationTime!, // Use non-null assertion
-            revocable: config.revocable!, // Use non-null assertion
-            schemaUID: config.schemaUid,
+            recipient: config.recipient!, // Default applied in loadFullConfig
+            expirationTime: config.expirationTime!, // Default applied & converted in loadFullConfig
+            revocable: config.revocable!, // Default applied in loadFullConfig
+            schemaUID: config.schemaUid, // Validated above
             schemaString: schemaRecord.schema, // Use the validated on-chain schema string
-            refUID: config.referenceUid!, // Use non-null assertion
+            refUID: config.referenceUid!, // Default applied in loadFullConfig
             dataToEncode: dataToEncode,
         };
 
