@@ -1,5 +1,5 @@
 {
-  "name": "qr-poc",
+  "name": "pm-poc",
   "private": true,
   "version": "0.0.0",
   "type": "module",
@@ -10,6 +10,8 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "@ethereum-attestation-service/eas-sdk": "^2.7.0",
+    "ethers": "^6.13.7",
     "react": "^19.0.0",
     "react-dom": "^19.0.0"
   },
