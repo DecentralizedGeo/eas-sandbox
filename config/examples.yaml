@@ -45,6 +45,21 @@ save-offchain-attestation:
 load-offchain-attestation:
   - attestationUid: "0x57321fea9593900bc3bc302b797d4f00595278f18de331d5a80c31815d2a0132" # UID of the attestation to load - REPLACE WITH A REAL UID
 
+chained-attestation:
+  - attestations:
+      - schemaUid: "0xb16fa048b0d597f5a821747eba64efa4762ee5143e9a80600d0005386edfc995" # Schema UID of the chained attestation
+        schemaString: "uint256 eventId, uint8 voteIndex"
+        referenceUid: "0xeeb457f8a9c5c9312010d69e0f7ab1119dcde9b5af421693939460ec6ce38fcf" # UID of the reference attestation - REPLACE WITH A REAL UID
+        fields:
+          eventId: 999 # Different example data
+          voteIndex: 2 # Different example data
+      - schemaUid: "0xb16fa048b0d597f5a821747eba64efa4762ee5143e9a80600d0005386edfc995" # Schema UID of the chained attestation
+        schemaString: "uint256 eventId, uint8 voteIndex"
+        referenceUid: "0xeeb457f8a9c5c9312010d69e0f7ab1119dcde9b5af421693939460ec6ce38fcf" # UID of the reference attestation - REPLACE WITH A REAL UID
+        fields:
+          eventId: 100 # Different example data
+          voteIndex: 1 # Different example data
+
 # Add other example script configurations here, keyed by script name (without .ts)
 # e.g.:
 # register-schema:
