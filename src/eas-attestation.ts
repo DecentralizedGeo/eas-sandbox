@@ -3,8 +3,8 @@ import { ethers, Signer } from "ethers";
 import { EASContractAddress } from "./config";
 import { getProviderSigner } from "./provider";
 
-// Define the interface for ON-chain attestation data
-export interface OnChainAttestationData {
+// Base interface for attestation data (shared fields)
+export interface BaseAttestationData {
     recipient: string;
     expirationTime: bigint;
     revocable: boolean;
@@ -14,15 +14,11 @@ export interface OnChainAttestationData {
     refUID?: string; // Optional: For referencing another attestation
 }
 
-// Define the interface for OFF-chain attestation data
-export interface OffChainAttestationData {
-    recipient: string;
-    expirationTime: bigint;
-    revocable: boolean;
-    schemaUID: string;
-    schemaString: string;
-    dataToEncode: { name: string; value: any; type: string }[];
-    refUID?: string; // Optional: For referencing another attestation
+// On-chain attestation data (no extra fields)
+export interface OnChainAttestationData extends BaseAttestationData { }
+
+// Off-chain attestation data (adds optional time)
+export interface OffChainAttestationData extends BaseAttestationData {
     time?: bigint; // Optional: Specific time for the attestation (defaults to current time if not provided)
     // nonce?: number; // Optional: Nonce for the attestation (defaults to 0 if not provided)
 }
@@ -184,4 +180,38 @@ export async function revokeOnChainAttestation(
     console.log("Revocation transaction submitted...");
     await tx.wait();
     console.log("Attestation revoked successfully!");
+}
+
+/**
+ * Timestamps an off-chain attestation UID on-chain using the EAS SDK.
+ * @param signer - An ethers Signer instance.
+ * @param uid - The UID (string) of the off-chain attestation to timestamp.
+ * @returns {Promise<string>} The transaction hash of the timestamping transaction.
+ */
+export async function timestampOffchainAttestation(
+    signer: Signer,
+    uid: string
+): Promise<string> {
+    const eas = new EAS(EASContractAddress);
+    eas.connect(signer as any);
+
+    console.log(`Timestamping off-chain attestation UID: ${uid}`);
+    const transaction = await eas.timestamp(uid);
+
+    console.log("Waiting for transaction confirmation...");
+    const receipt = await transaction.wait(); // Wait for the receipt instead
+    console.log("Transaction confirmation received.");
+
+
+    // Ensure receipt is valid and transaction succeeded
+    if (!receipt || transaction.receipt?.status === 0) {
+        console.error("Transaction failed on-chain. Receipt:", receipt);
+        throw new Error(`Schema registration transaction failed on-chain (status ${transaction.receipt?.status}). Hash: ${transaction.receipt?.hash}`);
+    }
+
+    // Print transaction details as no errors were encountered
+    console.log("Transaction successful! Hash:", transaction.receipt?.hash);
+    console.log("Transaction log details:", transaction.receipt?.logs);
+    return transaction.receipt?.hash as string; // Return the transaction hash
+
 }
