@@ -1,40 +1,51 @@
 import { getProviderSigner } from "../provider";
 import { registerSchema, SchemaRegistrationData } from "../eas-schema";
-import { loadRegisterSchemaConfig } from "../utils/config-helpers"; // Import the config loader
+import { loadFullConfig, BaseConfig } from "../utils/config-helpers"; // Import loadFullConfig and BaseConfig
 
-// Example script name
+// Example script name, used as key in examples.yaml
 const EXAMPLE_SCRIPT_NAME = "register-schema";
 
-// Remove hardcoded configuration constants
-// const schemaString = "...";
-// const resolverAddress = "...";
-// const revocable = ...;
+// Remove hardcoded configuration constants (already done)
 
 async function runExampleRegisterSchema() {
     try {
-        // --- Load Configuration from YAML ---
-        console.log(`\nLoading configuration for "${EXAMPLE_SCRIPT_NAME}" from examples.yaml...`);
-        const exampleConfigs = loadRegisterSchemaConfig(); // Use the specific loader
+        // --- Load Full Configuration from YAML ---
+        console.log(`\nLoading full configuration from examples.yaml...`);
+        const fullConfig = loadFullConfig();
+        if (!fullConfig) {
+            console.error("Failed to load configuration.");
+            process.exit(1);
+        }
 
-        if (!exampleConfigs || exampleConfigs.length === 0) {
+        // --- Get Config for this specific script ---
+        const scriptConfigs = fullConfig[EXAMPLE_SCRIPT_NAME];
+        if (!scriptConfigs || scriptConfigs.length === 0) {
             console.error(`Configuration for "${EXAMPLE_SCRIPT_NAME}" not found or is empty in examples.yaml.`);
             process.exit(1);
         }
 
         // For this example, process the first config entry.
-        // Could be extended to register multiple schemas in a loop.
-        const config = exampleConfigs[0];
-        console.log("Configuration loaded successfully:", config);
+        const config: BaseConfig = scriptConfigs[0];
+        console.log(`Using configuration for "${EXAMPLE_SCRIPT_NAME}":`, config);
         // ------------------------------------
+
+        // --- Script-Specific Validation ---
+        if (!config.schemaString || typeof config.schemaString !== 'string') {
+            console.error(`Error: Invalid or missing 'schema' string in config for ${EXAMPLE_SCRIPT_NAME}.`);
+            process.exit(1);
+        }
+        // Note: 'revocable' and 'resolverAddress' have defaults applied by loadFullConfig
+        // ------------------------------------
+
 
         // 1. Get the provider and signer
         const { signer } = getProviderSigner();
 
         // 2. Define the schema registration data from config
         const schemaData: SchemaRegistrationData = {
-            schema: config.schema,
-            resolverAddress: config.resolverAddress, // Already defaulted in loader
-            revocable: config.revocable, // Already defaulted in loader
+            schema: config.schemaString, // Validated above
+            resolverAddress: config.resolverAddress!, // Default applied in loadFullConfig
+            revocable: config.revocable!, // Default applied in loadFullConfig
         };
 
         // 3. Register the schema
