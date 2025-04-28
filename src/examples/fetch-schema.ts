@@ -1,34 +1,53 @@
+import { fetchSchema } from "../eas-schema";
 import { displaySchemaDetails } from "../utils/eas-helpers"; // Use the display helper
-import { loadFetchSchemaConfig } from "../utils/config-helpers"; // Import the config loader
+import { loadFullConfig, BaseConfig } from "../utils/config-helpers"; // Import loadFullConfig and BaseConfig
 
 // Example script name
 const EXAMPLE_SCRIPT_NAME = "fetch-schema";
 
-// Remove hardcoded configuration constants
-// const schemaUID = "...";
+// Remove hardcoded configuration constants (already done)
 
 async function runExampleFetchSchema() {
     try {
-        // --- Load Configuration from YAML ---
-        console.log(`\nLoading configuration for "${EXAMPLE_SCRIPT_NAME}" from examples.yaml...`);
-        const exampleConfigs = loadFetchSchemaConfig(); // Use the specific loader
+        // --- Load Full Configuration from YAML ---
+        console.log(`\nLoading full configuration from examples.yaml...`);
+        const fullConfig = loadFullConfig();
+        if (!fullConfig) {
+            console.error("Failed to load configuration.");
+            process.exit(1);
+        }
 
-        if (!exampleConfigs || exampleConfigs.length === 0) {
+        // --- Get Config for this specific script ---
+        const scriptConfigs = fullConfig[EXAMPLE_SCRIPT_NAME];
+        if (!scriptConfigs || scriptConfigs.length === 0) {
             console.error(`Configuration for "${EXAMPLE_SCRIPT_NAME}" not found or is empty in examples.yaml.`);
             process.exit(1);
         }
 
-        // Process the first config entry.
-        const config = exampleConfigs[0];
-        console.log("Configuration loaded successfully:", config);
+        // For this example, process the first config entry.
+        const config: BaseConfig = scriptConfigs[0];
+        console.log(`Using configuration for "${EXAMPLE_SCRIPT_NAME}":`, config);
         // ------------------------------------
 
-        console.log(`\nAttempting to fetch and display schema details using displaySchemaDetails helper for UID: ${config.schemaUid}...`);
+        // --- Script-Specific Validation ---
+        if (!config.schemaUid || typeof config.schemaUid !== 'string' || !config.schemaUid.startsWith('0x')) {
+            console.error(`Error: Invalid or missing 'schemaUid' in config for ${EXAMPLE_SCRIPT_NAME}.`);
+            process.exit(1);
+        }
+        // ------------------------------------
 
-        // Use the helper function with the UID from config
-        await displaySchemaDetails(config.schemaUid);
+        // 1. Fetch the schema using the UID from the config
+        console.log(`\nAttempting to fetch schema with UID: ${config.schemaUid}...`);
+        const schemaRecord = await fetchSchema(config.schemaUid); // Pass validated schemaUid
 
-        console.log("\nSchema details displayed above (if found).");
+        if (schemaRecord) {
+            console.log("\nSchema fetched successfully:");
+            console.log(schemaRecord);
+        } else {
+            console.log(`\nSchema with UID ${config.schemaUid} could not be fetched or was not found.`);
+        }
+
+        console.log(`\nExample script ${EXAMPLE_SCRIPT_NAME} finished.`);
 
     } catch (error) {
         console.error(`\nError running example ${EXAMPLE_SCRIPT_NAME} script:`, error);
