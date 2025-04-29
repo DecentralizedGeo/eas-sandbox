@@ -18,7 +18,7 @@ const MOCK_QR_DATA = '[28.3772, 81.5707]'
 
 function App() {
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  const [signer, setSigner] = useState<ethers.Signer | null>(null);
+  const [_signer, setSigner] = useState<ethers.Signer | null>(null);
   const [attestationUID, setAttestationUID] = useState<string | null>(null);
   const [transactionHash, setTransactionHash] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
