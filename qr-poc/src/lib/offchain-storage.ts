@@ -34,7 +34,7 @@ async function readStorage(): Promise<SignedOffchainAttestation[]> {
                         // Or handle as number if appropriate for the field
                     }
                 } catch (e: any) {
-                    console.log(`Error converting value for key ${key}:`, e); 
+                    console.log(`Error converting value for key ${key}:`, e);
                 }
             }
             return value;
@@ -54,7 +54,7 @@ async function readStorage(): Promise<SignedOffchainAttestation[]> {
 async function writeStorage(attestations: SignedOffchainAttestation[]): Promise<void> {
     try {
         // Stringify with BigInt support (store as strings ending with 'n')
-        const fileContent = JSON.stringify(attestations, (key, value) =>
+        const fileContent = JSON.stringify(attestations, (_key, value) =>
             typeof value === 'bigint' ? value.toString() + 'n' : value, 2);
         await fs.writeFile(storageFilePath, fileContent, 'utf-8');
     } catch (error) {
