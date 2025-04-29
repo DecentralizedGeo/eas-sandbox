@@ -16,6 +16,7 @@
         "example:save-offchain": "ts-node src/examples/save-offchain-attestation.ts",
         "example:load-offchain": "ts-node src/examples/load-offchain-attestations.ts",
         "example:chained-attestation": "ts-node src/examples/chained-attestation.ts",
+        "example:prepare-private-data": "ts-node src/examples/prepare-private-data.ts",
         "workflow:impact-monitoring": "ts-node src/workflows/workflow-impact-monitoring.ts",
         "workflow:event-checkin": "ts-node src/workflows/workflow-event-checkin.ts",
         "workflow:geocache": "ts-node src/workflows/workflow-geocaching.ts"
