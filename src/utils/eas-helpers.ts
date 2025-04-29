@@ -1,8 +1,9 @@
-import { EAS, SchemaEncoder, SchemaRegistry, SchemaRecord } from "@ethereum-attestation-service/eas-sdk";
+import { EAS, SchemaEncoder, SchemaRegistry, SchemaRecord, PrivateData } from "@ethereum-attestation-service/eas-sdk";
 import { ethers } from "ethers";
 import { getProviderSigner } from "../provider";
 import { EASContractAddress, EASSchemaRegistryAddress } from "../config";
 import { fetchSchema } from "../eas-schema"; // Import fetchSchema
+import { MerkleValue } from "@ethereum-attestation-service/eas-sdk"; // Import MerkleValue
 
 // Removed the redundant getSchemaRecord function
 
@@ -69,4 +70,68 @@ export function validateAttestationData(schemaString: string, data: Record<strin
     }
 }
 
-// Add other common EAS utility functions here as needed
+
+/**
+ * Prepares a PrivateData object for use in private attestations. (FR11 - Implied)
+ * This function takes the schema, the full data object, and the names of fields
+ * intended to be private, then formats them for the PrivateData constructor.
+ *
+ * @param schemaString The schema definition string.
+ * @param data The full data object for the attestation.
+ * @param privateFieldNames An array of field names from the data object that should be kept private.
+ * @returns A PrivateData instance ready for hashing and proof generation, or null if an error occurs.
+ */
+export function preparePrivateDataObject(
+    schemaString: string,
+    data: Record<string, any>,
+    privateFieldNames: string[]
+): PrivateData | null {
+    console.log("Preparing PrivateData object for fields:", privateFieldNames);
+    try {
+        const schemaEncoder = new SchemaEncoder(schemaString);
+        const schemaItems = schemaEncoder.schema; // Get the parsed schema items [{ name, type }]
+
+        // Map the full data into the structure expected by EAS, including type information
+        const allDataFormatted = schemaItems.map(item => {
+            if (!(item.name in data)) {
+                throw new Error(`Field "${item.name}" from schema not found in provided data.`);
+            }
+            return {
+                name: item.name,
+                value: data[item.name],
+                type: item.type
+            };
+        });
+
+        // Filter the formatted data to include only the fields designated as private
+        const privateDataFormatted: MerkleValue[] = allDataFormatted
+            .filter(item => privateFieldNames.includes(item.name))
+            // Ensure the structure matches MerkleValue (which is likely { name, value, type })
+            // If MerkleValue requires a different structure, adjust this mapping.
+            .map(item => ({
+                name: item.name,
+                value: item.value,
+                type: item.type,
+            }));
+
+        if (privateDataFormatted.length !== privateFieldNames.length) {
+            console.warn("Some specified private field names were not found in the schema or data.");
+        }
+
+        if (privateDataFormatted.length === 0) {
+            console.log("No private fields identified or provided. Returning null PrivateData object.");
+            // Depending on EAS requirements, you might return an empty PrivateData
+            // or handle this case differently. Returning null for clarity here.
+            return null; // Or potentially: return new PrivateData([]);
+        }
+
+        // Create the PrivateData object using the correctly formatted array
+        const privateData = new PrivateData(privateDataFormatted);
+        console.log("PrivateData object created successfully.");
+        return privateData;
+
+    } catch (error) {
+        console.error("Error preparing PrivateData object:", error);
+        return null;
+    }
+}
