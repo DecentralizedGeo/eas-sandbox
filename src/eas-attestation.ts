@@ -2,6 +2,7 @@ import { EAS, SchemaEncoder, OffchainAttestationParams, SignedOffchainAttestatio
 import { ethers, Signer } from "ethers";
 import { EASContractAddress } from "./config";
 import { getProviderSigner } from "./provider";
+import { estimateGasCost, reportActualGasCost } from "./utils/eas-helpers";
 
 // Base interface for attestation data (shared fields)
 export interface BaseAttestationData {
@@ -15,7 +16,9 @@ export interface BaseAttestationData {
 }
 
 // On-chain attestation data (no extra fields)
-export interface OnChainAttestationData extends BaseAttestationData { }
+export interface OnChainAttestationData extends BaseAttestationData {
+    value?: bigint; // Optional: Value in wei (default is 0n)
+}
 
 // Off-chain attestation data (adds optional time)
 export interface OffChainAttestationData extends BaseAttestationData {
@@ -30,44 +33,133 @@ export interface RevocationData {
 }
 
 /**
- * Creates an on-chain attestation using the EAS SDK.
+ * Creates an on-chain attestation using the provided data.
+ * Includes gas estimation before sending and reports gas used after confirmation.
  * @param signer - An ethers Signer instance.
- * @param attestationData - The data for the on-chain attestation.
+ * @param attestationData - The data for the attestation.
  * @returns {Promise<string>} The UID of the new attestation.
  */
 export async function createOnChainAttestation(
     signer: Signer,
     attestationData: OnChainAttestationData // Use specific interface
 ): Promise<string> {
+    if (!signer.provider) {
+        throw new Error("Signer must be connected to a provider for gas estimation.");
+    }
+    const provider = signer.provider; // Get provider from signer
+
     const eas = new EAS(EASContractAddress);
-    eas.connect(signer as any);
+    // Ensure EAS is connected with the signer
+    // Type assertion needed as EAS SDK connect might expect Provider | Signer
+    const easConnected = eas.connect(signer as any);
 
     const { recipient, expirationTime, revocable, schemaUID, schemaString, dataToEncode, refUID } = attestationData;
 
-    console.log(`Creating on-chain attestation with schema: ${schemaUID}`);
+    console.log(`\nPreparing on-chain attestation with schema: ${schemaUID}`);
     console.log(`Recipient: ${recipient}`);
 
     const schemaEncoder = new SchemaEncoder(schemaString);
     const encodedData = schemaEncoder.encodeData(dataToEncode);
 
-    console.log("\nEncoded Schema Data:", encodedData);
+    console.log("Encoded Schema Data:", encodedData);
 
-    const tx = await eas.attest({
+    // Prepare the attestation parameters
+    const attestationParams = {
         schema: schemaUID,
         data: {
             recipient: recipient,
             expirationTime: expirationTime,
             revocable: revocable,
             data: encodedData,
-            refUID: refUID ?? ethers.ZeroHash, // Use ZeroHash if refUID is not provided
+            refUID: refUID ?? ethers.ZeroHash,
+            value: 0n, // This represents the transaction value (in wei). Assuming no ETH value is sent with the attestation.
         },
-    });
+    };
+
+    // --- Gas Estimation (FR6) ---
+    try {
+        // Prepare the transaction data without sending by accessing the underlying contract method
+        // The wrapper easConnected.attest doesn't have populateTransaction, but the contract method does.
+        const txData = await easConnected.contract.attest.populateTransaction(attestationParams);
+        const _estimate = estimateGasCost(provider, signer, txData)
+    } catch (error) {
+        // Log the txData for debugging if needed (be careful with sensitive data)
+        // console.error("Transaction Data:", JSON.stringify(txData));
+        throw new Error("Failed to estimate gas for the transaction.");
+    }
 
     console.log("\nSubmitting attestation transaction...");
-    const newAttestationUID = await tx.wait();
+    const tx = await easConnected.attest(attestationParams);
+
+    // Ensure tx.wait() returns a non-null receipt
+    const receipt = await tx.wait();
+    // console.log(`Attestation UID: ${receipt}`);
+
+    if (!receipt) {
+        throw new Error(`Transaction ${tx.receipt?.hash} failed: No receipt received.`);
+    }
+
+    if (tx.receipt?.status === 0) {
+        console.error("Transaction failed on-chain. Receipt:", receipt);
+        throw new Error(`Transaction ${tx.receipt?.hash} reverted by the EVM.`);
+    }
 
     console.log("\nTransaction submitted and confirmed!");
-    console.log("New attestation UID:", newAttestationUID);
+
+    // --- Actual Gas Reporting (FR7) ---
+    reportActualGasCost(tx.receipt!); // Pass the receipt directly
+
+
+    // Extract the attestation UID from the logs (assuming standard EAS event)
+    // This part might need adjustment based on the exact event signature and logs structure
+    const logs = tx.receipt?.logs!;
+    let newAttestationUID = "";
+    // Get the interface from the connected contract instance
+    const easInterface = easConnected.contract.interface;
+
+    for (const log of logs) {
+        try {
+            const parsedLog = easInterface.parseLog(log);
+            if (parsedLog && parsedLog.name === "Attested") {
+                // Assuming the UID is the third indexed topic or a data field
+                // Check EAS SDK or Etherscan for exact event signature if needed
+                // Example: Accessing event arguments (adjust based on actual event)
+                if (parsedLog.args && parsedLog.args.uid) {
+                    newAttestationUID = parsedLog.args.uid;
+                    break;
+                }
+                // Fallback/Alternative: Check topics if UID is indexed
+                // if (parsedLog.topic === ethers.id("Attested(address,address,bytes32,bytes32)") && log.topics.length > 3) {
+                //     newAttestationUID = log.topics[3]; // Example: If UID is the 3rd indexed topic
+                //     break;
+                // }
+            }
+        } catch (e) {
+            // Ignore logs that don't match the EAS interface
+        }
+    }
+
+
+    if (!newAttestationUID || newAttestationUID === ethers.ZeroHash) {
+        console.warn("Could not automatically extract attestation UID from transaction logs. Please check the transaction on a block explorer.");
+        console.warn(`Transaction Hash: ${tx.receipt?.hash}`);
+        // Attempt to use the old method as a fallback, though it's less reliable
+        try {
+            const fallbackUID = await tx.wait(); // This might return the UID directly in some SDK versions/configurations
+            if (typeof fallbackUID === 'string' && fallbackUID.startsWith('0x')) {
+                newAttestationUID = fallbackUID;
+                console.log("Used fallback method to get UID:", newAttestationUID);
+            } else {
+                throw new Error("Failed to extract UID using primary and fallback methods.");
+            }
+        } catch (fallbackError) {
+            console.error("Fallback UID extraction also failed:", fallbackError);
+            throw new Error("Failed to extract attestation UID from transaction logs or fallback.");
+        }
+
+    }
+
+    console.log("Attestation UID:", newAttestationUID);
     console.log(`\nView your attestation at: https://sepolia.easscan.org/attestation/view/${newAttestationUID}`);
 
     return newAttestationUID;
@@ -204,14 +296,16 @@ export async function timestampOffchainAttestation(
 
 
     // Ensure receipt is valid and transaction succeeded
-    if (!receipt || transaction.receipt?.status === 0) {
+    if (!receipt || transaction.receipt?.status === 0) { // Check receipt status directly
         console.error("Transaction failed on-chain. Receipt:", receipt);
-        throw new Error(`Schema registration transaction failed on-chain (status ${transaction.receipt?.status}). Hash: ${transaction.receipt?.hash}`);
+        // Use receipt.hash if available, otherwise transaction.hash
+        const txHash = transaction.receipt?.hash;
+        throw new Error(`Timestamping transaction failed on-chain (status ${transaction.receipt?.status}). Hash: ${txHash}`);
     }
 
     // Print transaction details as no errors were encountered
-    console.log("Transaction successful! Hash:", transaction.receipt?.hash);
-    console.log("Transaction log details:", transaction.receipt?.logs);
-    return transaction.receipt?.hash as string; // Return the transaction hash
+    console.log("Transaction successful! Hash:", transaction.receipt?.hash); // Use receipt.hash
+    console.log("Transaction log details:", transaction.receipt?.logs); // Use receipt.logs
+    return transaction.receipt?.hash as string; // Return the transaction hash from the receipt
 
 }
