@@ -135,3 +135,70 @@ export function preparePrivateDataObject(
         return null;
     }
 }
+
+
+/**
+ * Estimates the gas cost for a pre-populated transaction.
+ * @param provider The provider to get fee data from.
+ * @param signer The signer to use for gas estimation.
+ * @param txData The populated transaction data (e.g., from contract.method.populateTransaction(...)).
+ * @returns An object containing the estimated gas units (bigint) and the estimated cost in ETH (string).
+ * @throws If gas estimation fails or fee data cannot be retrieved.
+ */
+export async function estimateGasCost(
+    provider: Provider, // Needed for fee data
+    signer: Signer,     // Needed for estimation
+    txData: ContractTransaction // Accept populated transaction data directly
+): Promise<{ estimatedGas: bigint, estimatedCost: string }> {
+    try {
+        // 1. Estimate gas using the provided signer and the populated transaction data
+        const estimatedGas = await signer.estimateGas(txData);
+        console.log("\n--- Estimated Gas Cost ---");
+        console.log(`Estimated Gas Units: ${estimatedGas.toString()}`);
+
+        // 2. Estimate cost based on current gas price using the provided provider
+        const feeData = await provider.getFeeData();
+        let estimatedCost = "N/A"; // Default value
+
+        if (feeData?.gasPrice) {
+            const estimatedCostWei = estimatedGas * feeData.gasPrice;
+            estimatedCost = formatUnits(estimatedCostWei, 'ether');
+            console.log(`Current Gas Price (Wei): ${feeData.gasPrice.toString()}`);
+            console.log(`Estimated Transaction Cost (ETH): ${estimatedCost}`);
+        } else {
+            console.warn("Could not retrieve gas price for estimation.");
+            // Decide if this should throw or return default cost
+            throw new Error("Failed to retrieve gas price for cost estimation.");
+        }
+        console.log("----------------------------");
+        return { estimatedGas, estimatedCost };
+
+    } catch (error) {
+        console.error("Gas estimation failed:", error);
+        // Log the txData for debugging if needed (be careful with sensitive data)
+        // console.error("Transaction Data:", JSON.stringify(txData));
+        throw new Error("Failed to estimate gas for the transaction.");
+    }
+}
+
+/**
+ * Reports the actual gas cost based on a transaction receipt.
+ * @param receipt The transaction receipt object.
+ */
+export function reportActualGasCost(receipt: TransactionReceipt): void {
+    console.log("\n--- Actual Gas Cost Report ---");
+    const gasUsed = receipt.gasUsed;
+    // Use gasPrice from receipt (it should reflect the actual price paid, including priority fee post-EIP-1559)
+    const effectiveGasPrice = receipt.gasPrice;
+
+    if (gasUsed && effectiveGasPrice) {
+        const actualCostWei = gasUsed * effectiveGasPrice;
+        console.log(`Actual Gas Used: ${gasUsed.toString()}`);
+        console.log(`Effective Gas Price (Wei): ${effectiveGasPrice.toString()}`);
+        console.log(`Actual Transaction Cost (ETH): ${formatEther(actualCostWei)}`);
+    } else {
+        console.warn("Could not determine actual gas cost from receipt (missing gasUsed or gasPrice).");
+        console.log("Receipt details:", receipt); // Log receipt for debugging
+    }
+    console.log("----------------------------");
+}
