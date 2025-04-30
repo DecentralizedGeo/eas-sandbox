@@ -60,6 +60,9 @@ chained-attestation:
           eventId: 100 # Different example data
           voteIndex: 1 # Different example data
 
+list-items:
+  - recipient: "0x3074C8732366cE5DB80986aBA8FB69897872DdB9"
+    referenceUid: "0xeeb457f8a9c5c9312010d69e0f7ab1119dcde9b5af421693939460ec6ce38fcf"
 # Add other example script configurations here, keyed by script name (without .ts)
 # e.g.:
 # register-schema:
