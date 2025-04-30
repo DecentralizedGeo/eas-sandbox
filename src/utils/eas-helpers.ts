@@ -1,9 +1,8 @@
-import { EAS, SchemaEncoder, SchemaRegistry, SchemaRecord, PrivateData } from "@ethereum-attestation-service/eas-sdk";
-import { ethers } from "ethers";
-import { getProviderSigner } from "../provider";
-import { EASContractAddress, EASSchemaRegistryAddress } from "../config";
+import { EAS, SchemaEncoder, SchemaRegistry, SchemaRecord, PrivateData, AttestationRequest, AttestationRequestData, Attestation } from "@ethereum-attestation-service/eas-sdk"; // Added AttestationRequestData, Attestation
+import { ethers, Provider, Signer, TransactionReceipt, ContractTransaction, formatEther, formatUnits, TransactionRequest, ZeroAddress } from "ethers"; // Added TransactionReceipt, TransactionResponse, Overrides, formatUnits, TransactionRequest, ZeroAddress
 import { fetchSchema } from "../eas-schema"; // Import fetchSchema
 import { MerkleValue } from "@ethereum-attestation-service/eas-sdk"; // Import MerkleValue
+import { GRAPHQL_ENDPOINT } from "../config"; // Import GraphQL endpoint
 
 // Removed the redundant getSchemaRecord function
 
