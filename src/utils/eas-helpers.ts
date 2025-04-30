@@ -202,3 +202,285 @@ export function reportActualGasCost(receipt: TransactionReceipt): void {
     }
     console.log("----------------------------");
 }
+
+
+/**
+ * Executes a GraphQL query against the EAS GraphQL endpoint.
+ * @param query The GraphQL query string.
+ * @param variables The variables to be used in the query.
+ * @returns The parsed JSON response from the GraphQL endpoint.
+ * @throws If the request fails or if the response is not valid JSON.
+ */
+async function executeGraphQLQuery(query: string, variables: Record<string, any>): Promise<any> {
+    let response: Response | null = null; // Define response variable here
+    try {
+        response = await fetch(GRAPHQL_ENDPOINT, { // Assign to response
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Accept': 'application/json',
+            },
+            body: JSON.stringify({
+                query,
+                variables,
+            }),
+        });
+
+        if (!response.ok) {
+            // Log raw text for non-OK responses as well
+            const errorText = await response.text();
+            console.error("GraphQL request failed with non-OK status:", response.status, response.statusText);
+            console.error("Raw response text:", errorText);
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+
+        // Try to parse JSON, log raw text if it fails
+        const responseText = await response.text(); // Get text first
+        try {
+            const result = JSON.parse(responseText); // Try parsing
+            if (result.errors) {
+                console.error("GraphQL Errors:", result.errors);
+                throw new Error(`GraphQL query failed: ${result.errors.map((e: any) => e.message).join(', ')}`);
+            }
+            return result.data;
+        } catch (parseError) {
+            console.error("Failed to parse GraphQL response as JSON:", parseError);
+            console.error("Raw response text:", responseText); // Log the problematic text
+            throw new Error("Received non-JSON response from GraphQL endpoint.");
+        }
+
+    } catch (error) {
+        // Catch fetch errors or errors thrown above
+        console.error("Error during GraphQL query execution:", error);
+        // Re-throw the error to be caught by the calling function
+        throw error;
+    }
+}
+
+
+/**
+ * Lists attestations associated with a given wallet address using GraphQL. (FR11)
+ * @param address The wallet address to query attestations for.
+ * @param filterBy Specifies whether to filter by 'attester', 'recipient', or 'either'. Defaults to 'either'.
+ * @param limit Max number of attestations to return. Defaults to 10.
+ */
+export async function listAttestationsForAddress(
+    address: string,
+    filterBy: 'attester' | 'recipient' | 'either' = 'either',
+    limit: number = 10
+): Promise<void> {
+    console.log(`\nListing attestations for address: ${address} (Filter: ${filterBy}, Limit: ${limit}) via GraphQL`);
+
+    // Construct the 'where' clause based on the filter
+    let whereClause: any = {};
+    if (filterBy === 'attester') {
+        whereClause = { attester: { equals: address } };
+    } else if (filterBy === 'recipient') {
+        whereClause = { recipient: { equals: address } };
+    } else { // 'either'
+        whereClause = {
+            OR: [
+                { attester: { equals: address } },
+                { recipient: { equals: address } }
+            ]
+        };
+    }
+
+    const query = `
+        query AttestationsByAddress($where: AttestationWhereInput, $take: Int) {
+            attestations(where: $where, take: $take, orderBy: { timeCreated: desc }) {
+                id
+                attester
+                recipient
+                refUID
+                revocable
+                timeCreated
+                expirationTime
+                schemaId
+                decodedDataJson # Request decoded data
+                # Add other fields if needed: revocationTime, txid, etc.
+            }
+        }
+    `;
+
+    try {
+        const variables = { where: whereClause, take: limit };
+        const data = await executeGraphQLQuery(query, variables);
+        const attestations = data?.attestations || [];
+
+        if (attestations.length === 0) {
+            console.log("No attestations found for this address with the specified filter.");
+            return;
+        }
+
+        console.log("\n--- Found Attestations ---");
+        attestations.forEach((att: any, index: number) => {
+            console.log(`  Attestation ${index + 1}:`);
+            console.log(`    UID: ${att.id}`);
+            console.log(`    Schema ID: ${att.schemaId}`);
+            console.log(`    Attester: ${att.attester}`);
+            console.log(`    Recipient: ${att.recipient}`);
+            console.log(`    Time Created: ${new Date(Number(att.timeCreated) * 1000).toLocaleString()}`); // Convert seconds to ms
+            console.log(`    Expiration Time: ${att.expirationTime === 0n ? 'Never' : new Date(Number(att.expirationTime) * 1000).toLocaleString()}`);
+            console.log(`    Revocable: ${att.revocable}`);
+            console.log(`    Reference UID: ${att.refUID !== ZeroAddress ? att.refUID : 'None'}`);
+            try {
+                // Attempt to parse and display decoded data
+                const decodedData = JSON.parse(att.decodedDataJson);
+                console.log("    Decoded Data:");
+                decodedData.forEach((item: { name: string, type: string, value: any }) => {
+                    // Display nested values if they exist (like decoded value)
+                    const displayValue = typeof item.value === 'object' && item.value !== null && 'value' in item.value
+                        ? item.value.value
+                        : item.value;
+                    console.log(`      - ${item.name} (${item.type}): ${JSON.stringify(displayValue)}`);
+                });
+            } catch (e) {
+                console.log(`    Decoded Data: (Error parsing JSON: ${att.decodedDataJson})`);
+            }
+            console.log("    ---");
+        });
+        console.log("--------------------------");
+
+    } catch (error) {
+        console.error(`Error listing attestations for address ${address}:`, error);
+    }
+}
+
+/**
+ * Lists schemas registered by a given wallet address using GraphQL. (FR12)
+ * @param address The wallet address of the schema creator.
+ * @param limit Max number of schemas to return. Defaults to 10.
+ */
+export async function listSchemasForAddress(address: string, limit: number = 10): Promise<void> {
+    console.log(`\nListing schemas registered by address: ${address} (Limit: ${limit}) via GraphQL`);
+
+    const query = `
+        query SchemasByCreator($where: SchemaWhereInput, $take: Int) {
+            schemata(where: $where, take: $take, orderBy: { time: desc }) {
+                id
+                schema
+                creator
+                resolver
+                revocable
+                time
+                index
+                schemaNames{name}
+            }
+        }
+    `;
+
+    const variables = {
+        where: { creator: { equals: address } },
+        take: limit
+    };
+
+    try {
+        const data = await executeGraphQLQuery(query, variables);
+        const schemas = data?.schemata || [];
+
+        if (schemas.length === 0) {
+            console.log("No schemas found registered by this address.");
+            return;
+        }
+
+        console.log("\n--- Found Schemas ---");
+        schemas.forEach((schema: any, index: number) => {
+            console.log(`  Schema ${index + 1}:`);
+            console.log(`    UID: ${schema.id}`);
+            console.log(`    Creator: ${schema.creator}`);
+            console.log(`    Schema Definition: ${schema.schema}`);
+            console.log(`    Resolver: ${schema.resolver !== ZeroAddress ? schema.resolver : 'None'}`);
+            console.log(`    Revocable: ${schema.revocable}`);
+            console.log(`    Time Created: ${new Date(Number(schema.time) * 1000).toLocaleString()}`);
+            console.log(`    Index: ${schema.index}`);
+            console.log(`    Schema Names:`);
+            schema.schemaNames.forEach((name: any) => {
+                console.log(`      - ${name.name}`);
+            });
+            console.log("    ---");
+        });
+        console.log("---------------------");
+
+    } catch (error) {
+        console.error(`Error listing schemas for address ${address}:`, error);
+        // print the search query as a curl statement to help debug the issue
+        console.error(`curl -X POST ${GRAPHQL_ENDPOINT} -H "Content-Type: application/json" -d '{"query": "${query}", "variables": ${JSON.stringify(variables)}}'`);
+    }
+}
+
+/**
+ * Lists attestations that reference a specific origin attestation UID using GraphQL. (FR13)
+ * @param refUID The UID of the attestation being referenced.
+ * @param limit Max number of attestations to return. Defaults to 10.
+ */
+export async function listReferencingAttestations(refUID: string, limit: number = 10): Promise<void> {
+    console.log(`\nListing attestations referencing UID: ${refUID} (Limit: ${limit}) via GraphQL`);
+    if (!refUID || refUID === ethers.ZeroHash || refUID === ZeroAddress) {
+        console.log("Invalid or zero refUID provided.");
+        return;
+    }
+
+    const query = `
+        query AttestationsByRefUID($where: AttestationWhereInput, $take: Int) {
+            attestations(where: $where, take: $take, orderBy: { timeCreated: desc }) {
+                id
+                attester
+                recipient
+                refUID # Included for confirmation, should match input
+                revocable
+                timeCreated
+                expirationTime
+                schemaId
+                decodedDataJson
+            }
+        }
+    `;
+
+    try {
+        const variables = {
+            where: { refUID: { equals: refUID } },
+            take: limit
+        };
+        const data = await executeGraphQLQuery(query, variables);
+        const referencingAttestations = data?.attestations || [];
+
+        if (referencingAttestations.length === 0) {
+            console.log("No attestations found referencing this UID.");
+            return;
+        }
+
+        console.log("\n--- Referencing Attestations ---");
+        referencingAttestations.forEach((att: any, index: number) => {
+            console.log(`  Attestation ${index + 1}:`);
+            console.log(`    UID: ${att.id}`);
+            console.log(`    Schema ID: ${att.schemaId}`);
+            console.log(`    Attester: ${att.attester}`);
+            console.log(`    Recipient: ${att.recipient}`);
+            console.log(`    Time Created: ${new Date(Number(att.timeCreated) * 1000).toLocaleString()}`);
+            console.log(`    Expiration Time: ${att.expirationTime === 0n ? 'Never' : new Date(Number(att.expirationTime) * 1000).toLocaleString()}`);
+            console.log(`    Revocable: ${att.revocable}`);
+            try {
+                // Attempt to parse and display decoded data
+                const decodedData = JSON.parse(att.decodedDataJson);
+                console.log("    Decoded Data:");
+                decodedData.forEach((item: { name: string, type: string, value: any }) => {
+                    // Display nested values if they exist (like decoded value)
+                    const displayValue = typeof item.value === 'object' && item.value !== null && 'value' in item.value
+                        ? item.value.value
+                        : item.value;
+                    console.log(`      - ${item.name} (${item.type}): ${JSON.stringify(displayValue)}`);
+                });
+            } catch (e) {
+                console.log(`    Decoded Data: (Error parsing JSON: ${att.decodedDataJson})`);
+            }
+            console.log("    ---");
+        });
+        console.log("------------------------------");
+
+    } catch (error) {
+        console.error(`Error listing referencing attestations for UID ${refUID}:`, error);
+    }
+}
+
+
