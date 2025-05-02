@@ -482,4 +482,55 @@ export async function listReferencingAttestations(refUID: string, limit: number 
     }
 }
 
+/**
+ * Generates a Merkle multi-proof for private data, allowing selective disclosure of fields.
+ *    NOTE: The proof object is verified against the full Merkle Tree to ensure its validity.
+ * @param privateDataPayload The PrivateData object containing the data to be attested.
+ * @param fieldsToDisclose An array of field names to be disclosed in the proof. If not provided, no fields will be disclosed.
+ * @returns An object containing the proof object and its JSON representation, or null if an error occurs.
+ * @throws If the proof generation fails or if the private data payload is invalid.
+ * */
+export function generatePrivateDataProof(
+    privateDataPayload: PrivateData, // Expects data already formatted
+    fieldsToDisclose?: string[] | null// Changed type to string[]
+): { proofObject: MerkleMultiProof, proofJson: string } | null { // Changed proof type
+    console.log("\n--- Generating Private Data Proof ---");
 
+    try {
+        let fieldsToDiscloseIndex: number[] = []; // Default to empty array if no fields to disclose are provided
+
+        if (!fieldsToDisclose) {
+            console.warn("No fields specified for disclosure. Proof can still be used to verify the attestation.");
+        } else {
+            console.log(`The proof will reveal the following fields: ${fieldsToDisclose.join(', ')}`);
+            fieldsToDiscloseIndex = getFieldIndices(fieldsToDisclose, privateDataPayload.getFullTree().values);
+        }
+
+        const proofObject = privateDataPayload.generateMultiProof(fieldsToDiscloseIndex);
+
+        // As a sanity check, validate the proof object against the privateDataPayload Merkle Tree
+        const fullTree = privateDataPayload.getFullTree();
+        const calculatedRoot = PrivateData.verifyFullTree(fullTree);
+        if (calculatedRoot !== fullTree.root) {
+            console.error("Calculated root does not match the full tree root. Proof may be invalid.");
+            return null;
+        }
+        const isValid = PrivateData.verifyMultiProof(fullTree.root, proofObject);
+        if (!isValid) {
+            console.error("Generated proof is invalid. Please check the input data and rerun proof generation.");
+            return null;
+        }
+
+        // If we got this far, the proof is valid
+        console.log("Proof object generated successfully and verified against the full tree.");
+
+        // Create a JSON representation of the proof object
+        const proofJson = JSON.stringify(proofObject, bigIntReplacer, 2);
+
+        return { proofObject, proofJson };
+
+    } catch (error) {
+        console.error("Error generating Merkle proof:", error);
+        return null;
+    }
+}
