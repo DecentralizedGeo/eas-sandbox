@@ -112,7 +112,6 @@ export function loadFullConfig(configFilename: string = "examples.yaml"): Exampl
             });
         }
 
-        console.log("Configuration processed with defaults applied.");
         return processedConfig;
 
     } catch (error) {
