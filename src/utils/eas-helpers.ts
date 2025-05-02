@@ -42,6 +42,55 @@ export async function displaySchemaDetails(schemaUID: string): Promise<void> {
     console.log("---------------------");
 }
 
+
+/**
+ * Finds the indices of specified field names within a schema definition or Merkle value array.
+ *
+ * @param fieldsToFind An array of field names to locate.
+ * @param definitionSource An array of SchemaItem objects, an array of schema field name strings, or an array of MerkleValue objects.
+ * @returns An array of numbers representing the 0-based indices of the found fields in the definitionSource.
+ *          Fields from fieldsToFind that are not present in definitionSource are ignored.
+ * @throws If definitionSource is not a valid array type or contains unexpected element types.
+ */
+export function getFieldIndices(fieldsToFind: string[], definitionSource: SchemaItem[] | string[] | MerkleValueWithSalt[]): number[] {
+    // Validate input type
+    if (!Array.isArray(definitionSource)) {
+        console.error("Invalid definitionSource: Expected an array of SchemaItem, string, or MerkleValue.");
+        throw new Error("Invalid definitionSource type provided to getFieldIndices. Expected an array.");
+    }
+
+    const indices = fieldsToFind.map(field => {
+        let index: number = -1; // Default to not found
+
+        if (definitionSource.length > 0) {
+            const firstElement = definitionSource[0];
+            if (typeof firstElement === 'string') {
+                // Handle array of strings
+                index = (definitionSource as string[]).findIndex(schemaField => schemaField === field);
+            } else if (typeof firstElement === 'object' && firstElement !== null && 'name' in firstElement && typeof firstElement.name === 'string') {
+                // Handle array of objects with a 'name' property (SchemaItem[] or MerkleValue[])
+                // Assumes MerkleValue also has a 'name' property of type string.
+                index = (definitionSource as Array<{ name: string }>).findIndex(item => item.name === field);
+            } else {
+                // Handle unexpected element type or structure within the array
+                const elementType = typeof firstElement;
+                const details = elementType === 'object' ? (firstElement === null ? 'null' : 'object without string name property') : elementType;
+                console.error(`Invalid element type in definitionSource array: Found ${details}. Expected string or object with a 'name' property.`);
+                throw new Error(`Invalid element type in definitionSource array provided to getFieldIndices.`);
+            }
+        }
+        // If definitionSource is empty, index remains -1 (field not found)
+
+        if (index === -1) {
+            // Log warning if the field wasn't found (and the source wasn't empty/invalid)
+            console.warn(`Field "${field}" not found in the provided definition source.`);
+        }
+        return index;
+    }).filter(index => index !== -1); // Filter out not found indexes (-1)
+
+    return indices;
+}
+
 /**
  * Validates attestation data against a given schema definition string. (FR10)
  * @param schemaString The schema definition (e.g., "string name, uint256 value").
