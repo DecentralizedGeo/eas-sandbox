@@ -24,18 +24,18 @@ export interface SchemaRecord {
  * Checks if a schema is already registered in the SchemaRegistry by calculating its potential UID.
  * 
  * @param schema The schema definition string (e.g., "uint256 eventId, bool vote").
- * @param resolverAddress Optional: Address of a resolver contract.
- * @param revocable Whether attestations using this schema are revocable by default.
+ * @param resolverAddress? Optional: Address of a resolver contract.
+ * @param revocable? Whether attestations using this schema are revocable by default.
  * @returns The UID if the schema exists, otherwise null.
  */
-export async function checkExistingSchema(schema: string, resolverAddress: string | undefined, revocable: boolean): Promise<string | null> {
+export async function checkExistingSchema(schema: string, resolverAddress?: string | undefined, revocable?: boolean): Promise<string | null> {
     // Calculate the potential UID for the schema.
     const potentialUID = ethers.solidityPackedKeccak256(
         ['string', 'address', 'bool'],
-        [schema, resolverAddress ?? ethers.ZeroAddress, revocable]
+        [schema, resolverAddress ?? ethers.ZeroAddress, revocable ?? true]
     );
 
-    console.log(`\nChecking for existing schema with potential UID: ${potentialUID}...`);
+    console.log(`\nChecking for existing schema with potential UID: ${potentialUID}`);
 
     // Instantiate SchemaRegistry for read operation.
     const schemaRegistry = new SchemaRegistry(EASSchemaRegistryAddress);
@@ -48,7 +48,7 @@ export async function checkExistingSchema(schema: string, resolverAddress: strin
 
         // Check if the schema record is empty (indicates not found).
         if (schemaRecord.uid === ethers.ZeroHash || schemaRecord.schema === "") {
-            console.log('Schema not registered yet.');
+            console.log(`Schema not registered yet with UID: ${schemaRecord.uid}`);
             return null;
         } else {
             // Schema exists
@@ -61,7 +61,8 @@ export async function checkExistingSchema(schema: string, resolverAddress: strin
         // Check if it's the specific 'Schema not found' error from the SDK.
         if (error instanceof Error && error.message === 'Schema not found') {
             // Log a simpler message without the stack trace for this specific case.
-            console.error("Error checking existing schema: Error: Schema not found");
+            console.error(`Error checking existing schema: Error: Schema not Found with UID ${potentialUID}`);
+            console.error(`The schema "${schema}" does not exist on the EAS SchemaRegistry`);
         } else {
             // Log other unexpected errors with more details.
             console.error("Unexpected error checking existing schema:", error);
