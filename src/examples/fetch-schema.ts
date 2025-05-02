@@ -1,16 +1,14 @@
-import { fetchSchema } from "../eas-schema";
-import { displaySchemaDetails } from "../utils/eas-helpers"; // Use the display helper
-import { loadFullConfig, BaseConfig } from "../utils/config-helpers"; // Import loadFullConfig and BaseConfig
+import { fetchSchema, checkExistingSchema } from "../eas-schema";
+import { displaySchemaDetails } from "../utils/eas-helpers";
+import { loadFullConfig, BaseConfig } from "../utils/config-helpers";
 
-// Example script name
+// Specify the section name that you want to use in the examples.yaml file
 const EXAMPLE_SCRIPT_NAME = "fetch-schema";
 
-// Remove hardcoded configuration constants (already done)
 
 async function runExampleFetchSchema() {
     try {
         // --- Load Full Configuration from YAML ---
-        console.log(`\nLoading full configuration from examples.yaml...`);
         const fullConfig = loadFullConfig();
         if (!fullConfig) {
             console.error("Failed to load configuration.");
@@ -29,28 +27,27 @@ async function runExampleFetchSchema() {
         console.log(`Using configuration for "${EXAMPLE_SCRIPT_NAME}":`, config);
         // ------------------------------------
 
-        // --- Script-Specific Validation ---
-        if (!config.schemaUid || typeof config.schemaUid !== 'string' || !config.schemaUid.startsWith('0x')) {
-            console.error(`Error: Invalid or missing 'schemaUid' in config for ${EXAMPLE_SCRIPT_NAME}.`);
+        if (!config.schemaUid && !config.schemaString) {
+            console.error(`Error: Neither 'schemaUid' nor 'schemaString' provided in config for ${EXAMPLE_SCRIPT_NAME}.`);
             process.exit(1);
         }
-        // ------------------------------------
+        if (config.schemaUid) {
+            console.log(`\nAttempting to fetch schema with UID: ${config.schemaUid}`);
+            const schemaRecord = await fetchSchema(config.schemaUid);
+            if (schemaRecord) {
+                console.log("\nSchema fetched successfully:");
+                displaySchemaDetails(schemaRecord.uid);
+            } else {
+                console.log(`\nSchema with UID ${config.schemaUid} could not be fetched or was not found.`);
+            }
+        } else if (config.schemaString) {
+            console.log(`\nIdentifying what the schema UID is for "${config.schemaString}"`);
+            checkExistingSchema(config.schemaString);
 
-        // 1. Fetch the schema using the UID from the config
-        console.log(`\nAttempting to fetch schema with UID: ${config.schemaUid}...`);
-        const schemaRecord = await fetchSchema(config.schemaUid); // Pass validated schemaUid
-
-        if (schemaRecord) {
-            console.log("\nSchema fetched successfully:");
-            console.log(schemaRecord);
-        } else {
-            console.log(`\nSchema with UID ${config.schemaUid} could not be fetched or was not found.`);
         }
-
         console.log(`\nExample script ${EXAMPLE_SCRIPT_NAME} finished.`);
 
     } catch (error) {
-        console.error(`\nError running example ${EXAMPLE_SCRIPT_NAME} script:`, error);
         process.exit(1);
     }
 }
