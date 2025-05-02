@@ -63,6 +63,16 @@ chained-attestation:
 list-items:
   - recipient: "0x3074C8732366cE5DB80986aBA8FB69897872DdB9"
     referenceUid: "0xeeb457f8a9c5c9312010d69e0f7ab1119dcde9b5af421693939460ec6ce38fcf"
+
+private-data-proofs:
+  - schemaString: "string location, uint256 timestamp, string notes"
+    schemaUid: "0xb08ebaac3deb3ed7e125d076eb7b0cbe4f0e66aff74d8dd38c6214fd9d162587"
+    fields:
+      location: "New York"
+      timestamp: 1633072800 # Example timestamp
+      notes: "This is a private note."
+    revocable: true # Optional, defaults to true
+
 # Add other example script configurations here, keyed by script name (without .ts)
 # e.g.:
 # register-schema:
