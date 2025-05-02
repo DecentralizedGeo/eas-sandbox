@@ -45,7 +45,7 @@ async function runExampleOnChainAttestation() {
         const { signer } = getProviderSigner();
 
         // --- Schema String Validation Step (using config) ---
-        console.log(`\nFetching schema record for UID: ${config.schemaUid} to verify schema string...`);
+        console.log(`\nFetching schema record for UID ${config.schemaUid} to verify schema string...`);
         const schemaRecord = await fetchSchema(config.schemaUid); // Pass validated schemaUid
 
         if (!schemaRecord) {
@@ -58,11 +58,9 @@ async function runExampleOnChainAttestation() {
         if (schemaRecord.schema !== schemaStringToValidate) {
             console.warn(`Warning: Schema string in config ("${config.schemaString}") does not match on-chain record ("${schemaRecord.schema}"). Using on-chain schema for validation.`);
         }
-        console.log("Using schema string for validation:", schemaRecord.schema);
+        console.log(`Using schema string for validation:", schemaRecord.schema\n`);
         // -------------------------------------
 
-        // --- Data Validation Step (FR10 - using config) ---
-        console.log("\nValidating attestation data against schema...");
         // Use the validated fields directly from the config object
         const isValid = validateAttestationData(schemaRecord.schema, config.fields);
 
@@ -70,7 +68,6 @@ async function runExampleOnChainAttestation() {
             console.error("Attestation data validation failed. Aborting creation.");
             process.exit(1);
         }
-        console.log("Data validation successful.");
         // -------------------------------------
 
         // 2. Prepare the on-chain attestation data from config
