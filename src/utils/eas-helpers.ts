@@ -69,6 +69,54 @@ export function validateAttestationData(schemaString: string, data: Record<strin
     }
 }
 
+/**
+ * Prepares the schema items for the attestation based on the provided schema string and config fields.
+ * This function verifies that the fields in the config match the schema and filters out any extra fields.
+ * It also ensures that the types are correctly set for the schema items.
+ * 
+ * @param schemaString The schema definition string (e.g., "string name, uint256 value").
+ * @param dataPayload A key/value data object (e.g., { name: "Test", value: 123 }).
+ * @returns An array of SchemaItem objects ready for attestation.
+ * @throws If there are missing required fields or if the schema is invalid.
+ * */
+export function prepareSchemaItem(schemaString: string, dataPayload: Record<string, any>): SchemaItem[] {
+    console.log("Verifying fields against schema...");
+    const schemaEncoder = new SchemaEncoder(schemaString);
+    const schemaItems = schemaEncoder.schema;
+    const schemaFieldNames = schemaItems.map(item => item.name);
+    const configFieldNames = Object.keys(dataPayload);
+
+    // Check 1: Fields required by schema but missing in config
+    const missingInConfig = schemaFieldNames.filter(field => !(field in dataPayload));
+    if (missingInConfig.length > 0) {
+        // Throw an error if required fields are missing
+        throw new Error(`Error: The following fields required by the schema are missing in the provided configuration: ${missingInConfig.join(', ')}`);
+    }
+
+    // Check 2: Look for records that are not required by schema (extra fields)
+    const extraInConfig = configFieldNames.filter(field => !schemaFieldNames.includes(field));
+    if (extraInConfig.length > 0) {
+        console.warn(`Warning: The following fields are present in the configuration but not in the schema (they will be ignored): ${extraInConfig.join(', ')}`);
+    }
+
+    // Remove the extra records
+    const validatedFields: Record<string, any> = {};
+    for (const schemaFieldName of schemaFieldNames) {
+        validatedFields[schemaFieldName] = dataPayload[schemaFieldName];
+    }
+
+    // Create a SchemaItem array for the validated fields
+    const validatedSchemaItems = schemaItems.map(item => {
+        return {
+            name: item.name,
+            type: item.type,
+            value: validatedFields[item.name],
+        };
+    });
+
+    console.log("Fields verified and filtered against schema successfully.");
+    return validatedSchemaItems;
+}
 
 /**
  * Prepares a PrivateData object for use in private attestations. (FR11 - Implied)
