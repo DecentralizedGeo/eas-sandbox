@@ -194,7 +194,6 @@ export async function fetchSchema(uid: string): Promise<SchemaRecord | null> {
     // Connect the provider to the SchemaRegistry instance
     schemaRegistry.connect(provider);
 
-    console.log(`\nFetching schema with UID: ${uid}...`);
     try {
         // Use the schemaRegistry instance to call getSchema
         const schemaRecord = await schemaRegistry.getSchema({ uid });
@@ -204,8 +203,6 @@ export async function fetchSchema(uid: string): Promise<SchemaRecord | null> {
             console.warn(`Schema with UID ${uid} not found.`);
             return null;
         }
-
-        console.log("Schema found:", schemaRecord);
         return schemaRecord;
     } catch (error) {
         console.error(`Error fetching schema ${uid}:`, error);
