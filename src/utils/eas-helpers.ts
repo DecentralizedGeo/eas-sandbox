@@ -1,10 +1,13 @@
-import { EAS, SchemaEncoder, SchemaRegistry, SchemaRecord, PrivateData, AttestationRequest, AttestationRequestData, Attestation } from "@ethereum-attestation-service/eas-sdk"; // Added AttestationRequestData, Attestation
-import { ethers, Provider, Signer, TransactionReceipt, ContractTransaction, formatEther, formatUnits, TransactionRequest, ZeroAddress } from "ethers"; // Added TransactionReceipt, TransactionResponse, Overrides, formatUnits, TransactionRequest, ZeroAddress
-import { fetchSchema } from "../eas-schema"; // Import fetchSchema
-import { MerkleValue } from "@ethereum-attestation-service/eas-sdk"; // Import MerkleValue
-import { GRAPHQL_ENDPOINT } from "../config"; // Import GraphQL endpoint
+import { SchemaEncoder, SchemaItem, PrivateData, MerkleValue, MerkleValueWithSalt, MerkleMultiProof } from "@ethereum-attestation-service/eas-sdk";
+import { ethers, Provider, Signer, TransactionReceipt, ContractTransaction, formatEther, formatUnits, ZeroAddress } from "ethers";
+import { fetchSchema } from "../eas-schema";
+import { GRAPHQL_ENDPOINT } from "../config";
 
-// Removed the redundant getSchemaRecord function
+// Helper to convert BigInt arrays to string for JSON
+const bigIntReplacer = (key: string, value: any) =>
+    typeof value === 'bigint'
+        ? value.toString()
+        : value;
 
 /**
  * Looks up and displays schema details for a given schema UID. (FR8)
