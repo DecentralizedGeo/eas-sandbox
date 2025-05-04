@@ -18,7 +18,8 @@
         "workflow:impact-monitoring": "ts-node src/workflows/workflow-impact-monitoring.ts",
         "workflow:event-checkin": "ts-node src/workflows/workflow-event-checkin.ts",
         "workflow:geocache": "ts-node src/workflows/workflow-geocaching.ts",
-        "workflow:proofmode": "ts-node src/workflows/workflow-proofmode.ts"
+        "workflow:proofmode": "ts-node src/workflows/workflow-proofmode.ts",
+        "workflow:qr": "ts-node src/workflows/workflow-qr.ts"
     },
     "keywords": [
         "eas",
@@ -35,6 +36,8 @@
         "dotenv": "^16.4.5",
         "ethers": "^6",
         "geoip-lite": "^1.4.10",
+        "jimp": "^1.6.0",
+        "jsqr": "^1.4.0",
         "public-ip": "^7.0.1"
     },
     "devDependencies": {
