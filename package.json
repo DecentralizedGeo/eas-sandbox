@@ -18,6 +18,7 @@
         "workflow:impact-monitoring": "ts-node src/workflows/workflow-impact-monitoring.ts",
         "workflow:event-checkin": "ts-node src/workflows/workflow-event-checkin.ts",
         "workflow:geocache": "ts-node src/workflows/workflow-geocaching.ts",
+        "workflow:proofmode": "ts-node src/workflows/workflow-proofmode.ts",
         "workflow:qr": "ts-node src/workflows/workflow-qr.ts"
     },
     "keywords": [
@@ -30,6 +31,8 @@
     "license": "ISC",
     "dependencies": {
         "@ethereum-attestation-service/eas-sdk": "^2.7.0",
+        "@types/crypto-js": "^4.2.2",
+        "crypto-js": "^4.2.0",
         "dotenv": "^16.4.5",
         "ethers": "^6",
         "geoip-lite": "^1.4.10",

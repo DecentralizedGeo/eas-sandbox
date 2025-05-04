@@ -120,3 +120,8 @@ The following scripts in `src/workflows/` demonstrate end-to-end use cases lever
   - Illustrates a geocaching scenario that simulates a user scanning a QR code that triggers the creation of an attestation containing geospatial metadata grabbed from the scanned QR code.
   - Run with: `yarn workflow:geocache`
   - **Note:** You may need to edit the script to provide relevant schema and location details.
+
+- **`workflow-proofmode.ts`**:
+  - Illustrates a scenario that simulates a user uploading a ProofMode file that triggers the creation of an attestation containing metadata grabbed from the uploaded ProofMode file.
+  - Run with: `yarn workflow:proofmode`
+  - **Note:** You may need to edit the script to provide relevant schema details.
