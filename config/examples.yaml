@@ -150,7 +150,7 @@ create-private-data-object:
       notes: "This is a private note."
     revocable: true
 
-private-data-proofs:
+generate-private-data-proofs:
   - schemaString: "string location, uint256 timestamp, string notes"
     schemaUid: "0xb08ebaac3deb3ed7e125d076eb7b0cbe4f0e66aff74d8dd38c6214fd9d162587"
     fields:
@@ -159,7 +159,7 @@ private-data-proofs:
       notes: "This is a private note."
     revocable: true
 
-gas-comparison:
+gas-cost-comparison:
   # Below are two example geosjon objects to be used for gas comparison.
   - fields:
       coordinates: |

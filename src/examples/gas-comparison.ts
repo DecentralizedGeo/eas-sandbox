@@ -2,12 +2,12 @@ import { EAS, SchemaEncoder, OffchainAttestationParams, SignedOffchainAttestatio
 
 import { getProviderSigner } from "../provider";
 import { prepareSchemaItem, estimateGasCost, extractAndScaleCoordinates, bigIntReplacer } from "../utils/eas-helpers";
-import { EASSchemaRegistryAddress, EASContractAddress } from "../config"
+import { EASContractAddress } from "../config"
 import { checkExistingSchema } from "../eas-schema";
 import { loadFullConfig, BaseConfig } from "../utils/config-helpers"; // Import loadFullConfig and BaseConfig
 
 // Example script name, used as key in examples.yaml
-const EXAMPLE_SCRIPT_NAME = "gas-comparison";
+const EXAMPLE_SCRIPT_NAME = "gas-cost-comparison";
 
 
 // --- IMPORTANT: Replace with Actual Registered Schema UIDs ---
