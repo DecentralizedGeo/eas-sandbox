@@ -35,7 +35,7 @@ export async function checkExistingSchema(schema: string, resolverAddress?: stri
         [schema, resolverAddress ?? ethers.ZeroAddress, revocable ?? true]
     );
 
-    console.log(`\nChecking for existing schema with potential UID: ${potentialUID}`);
+    console.log(`\nChecking the schema registry for schema: "${schema}" | UID: ${potentialUID}`);
 
     // Instantiate SchemaRegistry for read operation.
     const schemaRegistry = new SchemaRegistry(EASSchemaRegistryAddress);
@@ -68,7 +68,7 @@ export async function checkExistingSchema(schema: string, resolverAddress?: stri
             console.error("Unexpected error checking existing schema:", error);
         }
         // Decide on error handling: return null or re-throw. Returning null aligns with "not found".
-        return null; 
+        return null;
     }
 }
 
