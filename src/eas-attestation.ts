@@ -32,6 +32,23 @@ export interface RevocationData {
     uid: string; // The UID of the attestation to revoke
 }
 
+// Since the EAS SDK does not map the attestation property names to the return values. We must define
+// the list of property names that we expect and manually map them to the return values.
+// See the `Attestation` interface in the EAS SDK for the full list of properties.
+
+export const attestationProps = [
+    "uid",
+    "schema",
+    "refUID",
+    "time",
+    "expirationTime",
+    "revocationTime",
+    "recipient",
+    "revocable",
+    "attester",
+    "data"
+];
+
 /**
  * Creates an on-chain attestation using the provided data.
  * Includes gas estimation before sending and reports gas used after confirmation.
@@ -233,16 +250,32 @@ export async function getAttestation(uid: string): Promise<Attestation | null> {
         eas.connect(provider);
 
         const attestation = await eas.getAttestation(uid);
-        console.log("Attestation found:", attestation);
+        // Pretty print attestation details
+        if (attestation) {
+
+            // Create a dictionary object that maps property names to their values
+            const attestationDetails: { [key: string]: any } = {};
+            attestationProps.forEach((prop) => {
+                const value = (attestation as any)[prop];
+                attestationDetails[prop] = value;
+            }
+            );
+
+            // Print the details in a readable format
+            console.log("\nAttestation found:");
+            console.log(`${JSON.stringify(attestationDetails, bigIntReplacer, 2)}`); // Use the custom replacer for BigInt
+        } else {
+            console.log("Attestation not found.");
+        }
         return attestation;
     } catch (error: any) {
         // Handle cases where the attestation might not exist or other errors
-        if (error.message.includes("invalid attestation uid")) { // Example error check, adjust as needed
+        if (error.message.includes("invalid attestation uid")) {
             console.warn(`Attestation with UID ${uid} not found or invalid.`);
             return null;
         } else {
             console.error(`Error fetching attestation ${uid}:`, error);
-            throw error; // Re-throw other errors
+            throw error;
         }
     }
 }
