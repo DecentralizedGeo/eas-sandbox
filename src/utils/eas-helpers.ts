@@ -4,7 +4,7 @@ import { fetchSchema } from "../eas-schema";
 import { GRAPHQL_ENDPOINT } from "../config";
 
 // Helper to convert BigInt arrays to string for JSON
-const bigIntReplacer = (key: string, value: any) =>
+export const bigIntReplacer = (key: string, value: any) =>
     typeof value === 'bigint'
         ? value.toString()
         : value;
