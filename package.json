@@ -18,6 +18,7 @@
         "example:chained-attestation": "ts-node src/examples/chained-attestation.ts",
         "example:prepare-private-data": "ts-node src/examples/prepare-private-data.ts",
         "example:generate-private-data-proofs": "ts-node src/examples/private-data-proofs.ts",
+        "example:generate-onchain-private-data-proofs": "ts-node src/examples/private-data-proofs-onchain.ts",
         "example:gas-cost-comparison": "ts-node src/examples/gas-comparison.ts",
         "example:list-items": "ts-node src/examples/list-items.ts",
         "workflow:impact-monitoring": "ts-node src/workflows/workflow-impact-monitoring.ts",
