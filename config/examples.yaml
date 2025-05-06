@@ -71,8 +71,37 @@ revoke-attestation:
     attestationUid: "0x57321fea9593900bc3bc302b797d4f00595278f18de331d5a80c31815d2a0132"
 
 save-offchain-attestation:
-  - schemaUid: "0xb16fa048b0d597f5a821747eba64efa4762ee5143e9a80600d0005386edfc995"
-    recipient: "0xFD50b031E778fAb33DfD2Fc3Ca66a1EeF0652165"
+  # - schemaString: "bytes32 eventId, int40[2][][] coordinates, string geometryType, string crs"
+  #   schemaUid: "0xc04a24715ae76ee0eb73d7d985b7c4d13430c43c15d6cc71beb9896080b6b8d4"
+  #   fields:
+  #     eventId: "Enter an event name here"
+  #     coordinates:
+  #       [
+  #         [
+  #           [-71099920287, 42357281791],
+  #           [-71099920287, 42356854509],
+  #           [-71099045620, 42356854509],
+  #           [-71099045620, 42357281791],
+  #           [-71099920287, 42357281791],
+  #         ],
+  #         [
+  #           [-71099488030, 42356728102],
+  #           [-71099488030, 42356496024],
+  #           [-71099093256, 42356496024],
+  #           [-71099093256, 42356728102],
+  #           [-71099488030, 42356728102],
+  #         ],
+  #       ]
+  #     geometryType: "Polygon"
+  #     crs: "EPSG:4326"
+  - schemaUid: "0xb08ebaac3deb3ed7e125d076eb7b0cbe4f0e66aff74d8dd38c6214fd9d162587"
+    referenceUid: "0x5b647b9b8af5e81437c66f7d9334ee237bd0fc18134a54a5a9870cde8d4e4584"
+    schemaString: "string location, uint256 timestamp, string notes"
+    revocable: true
+    fields:
+      location: "New York"
+      timestamp: 1633072800
+      notes: "This is a private note."
 
 load-offchain-attestation:
   - attestationUid: "0x57321fea9593900bc3bc302b797d4f00595278f18de331d5a80c31815d2a0132"
