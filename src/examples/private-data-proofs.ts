@@ -7,12 +7,6 @@ import { loadFullConfig, BaseConfig } from "../utils/config-helpers";
 // Example script name, used as key in examples.yaml
 const EXAMPLE_SCRIPT_NAME = "private-data-proofs";
 
-// Helper to convert BigInt arrays to string for JSON
-const bigIntReplacer = (key: string, value: any) =>
-    typeof value === 'bigint'
-        ? value.toString()
-        : value;
-
 async function runPrivateDataWorkflow() {
     console.log("\n--- Starting Private Data Workflow ---");
 
