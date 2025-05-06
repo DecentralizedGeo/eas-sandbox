@@ -116,14 +116,14 @@ export async function registerSchema(
         //     gasLimit: 5000000
         // };
 
-        const overrides = {}
-        console.log(`Using overrides: ${JSON.stringify(overrides)}`);
+        // const overrides = {}
+        // console.log(`Using overrides: ${JSON.stringify(overrides)}`);
 
         const transaction = await schemaRegistry.register({
             schema: schema,
             resolverAddress: resolverAddress ?? ethers.ZeroAddress, // Use ZeroAddress if no resolver
             revocable: revocable,
-        }, overrides); // Pass overrides here
+        }); // Pass overrides here
 
         console.log("Waiting for transaction confirmation...");
         const receipt = await transaction.wait(); // Wait for the receipt instead
