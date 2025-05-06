@@ -41,9 +41,7 @@ async function runPrivateDataWorkflow() {
         console.error(`Error: Invalid or missing 'recipient' in config for ${EXAMPLE_SCRIPT_NAME}.`);
         process.exit(1);
     }
-    // Define which fields to disclose later for the proof
-    const fieldsToDisclose = ["timestamp", "location"]; // Example: Specify which private fields to disclose
-    // const fieldsToDisclose: string[] | null = null; // Example with no fields to disclose
+
     // ------------------------------------
 
     // 1. Get Provider and Signer
@@ -85,7 +83,7 @@ async function runPrivateDataWorkflow() {
     console.log(privateData.getFullTree().values);
 
     console.log("\n--- 2. Proof Generation ---");
-    const resultantProof = generatePrivateDataProof(privateData, fieldsToDisclose);
+    const resultantProof = generatePrivateDataProof(privateData, config.fieldsToDisclose);
     // const resultantProof = generatePrivateDataProof(privateData);
     if (!resultantProof) {
         console.error("Failed to generate proof. Aborting.");
