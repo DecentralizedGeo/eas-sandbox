@@ -272,9 +272,10 @@ export function reportActualGasCost(receipt: TransactionReceipt): void {
 
     if (gasUsed && effectiveGasPrice) {
         const actualCostWei = gasUsed * effectiveGasPrice;
-        console.log(`Actual Gas Used: ${gasUsed.toString()}`);
-        console.log(`Effective Gas Price (Wei): ${effectiveGasPrice.toString()}`);
-        console.log(`Actual Transaction Cost (ETH): ${formatEther(actualCostWei)}`);
+        const actualCostEth = formatUnits(actualCostWei, 'ether');
+        console.log(`Actual Gas Units Used: ${Number(gasUsed.toString()).toLocaleString()}`);
+        console.log(`Effective Gas Price: ${Number(formatUnits(effectiveGasPrice, 'gwei')).toLocaleString()} Gwei`);
+        console.log(`Actual Transaction Cost: ${Number(actualCostEth).toLocaleString(undefined, { maximumFractionDigits: 8 })} ETH`);
     } else {
         console.warn("Could not determine actual gas cost from receipt (missing gasUsed or gasPrice).");
         console.log("Receipt details:", receipt); // Log receipt for debugging
