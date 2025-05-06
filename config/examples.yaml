@@ -144,6 +144,7 @@ list-items:
 
 create-private-data-object:
   - schemaUid: "0xb08ebaac3deb3ed7e125d076eb7b0cbe4f0e66aff74d8dd38c6214fd9d162587"
+    schemaString: "string location, uint256 timestamp, string notes"
     fields:
       location: "New York"
       timestamp: 1633072800
@@ -151,13 +152,49 @@ create-private-data-object:
     revocable: true
 
 generate-private-data-proofs:
-  - schemaString: "string location, uint256 timestamp, string notes"
-    schemaUid: "0xb08ebaac3deb3ed7e125d076eb7b0cbe4f0e66aff74d8dd38c6214fd9d162587"
+  - schemaUid: "0xb08ebaac3deb3ed7e125d076eb7b0cbe4f0e66aff74d8dd38c6214fd9d162587"
+    schemaString: "string location, uint256 timestamp, string notes"
     fields:
       location: "New York"
       timestamp: 163307280
       notes: "This is a private note."
     revocable: true
+    fieldsToDisclose: ["location", "timestamp"]
+
+generate-onchain-private-data-proofs:
+  - schemaString: "bytes32 eventId, int40[2][][] coordinates, string geometryType, string crs"
+    schemaUid: "0xc04a24715ae76ee0eb73d7d985b7c4d13430c43c15d6cc71beb9896080b6b8d4"
+    fields:
+      eventId: "Enter an event name here"
+      coordinates:
+        [
+          [
+            [-71099920287, 42357281791],
+            [-71099920287, 42356854509],
+            [-71099045620, 42356854509],
+            [-71099045620, 42357281791],
+            [-71099920287, 42357281791],
+          ],
+          [
+            [-71099488030, 42356728102],
+            [-71099488030, 42356496024],
+            [-71099093256, 42356496024],
+            [-71099093256, 42356728102],
+            [-71099488030, 42356728102],
+          ],
+        ]
+      geometryType: "Polygon"
+      crs: "EPSG:4326"
+    revocable: true
+    fieldsToDisclose: ["geometryType", "crs"]
+  # - schemaUid: "0xb08ebaac3deb3ed7e125d076eb7b0cbe4f0e66aff74d8dd38c6214fd9d162587"
+  #   schemaString: "string location, uint256 timestamp, string notes"
+  #   fields:
+  #     location: "New York"
+  #     timestamp: 163307280
+  #     notes: "This is a private note."
+  #   revocable: true
+  #   fieldsToDisclose: ["location", "timestamp"]
 
 gas-cost-comparison:
   # Below are two example geosjon objects to be used for gas comparison.
