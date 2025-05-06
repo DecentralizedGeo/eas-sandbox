@@ -1,16 +1,15 @@
 import { getProviderSigner } from "../provider";
 import { createOnChainAttestation, OnChainAttestationData } from "../eas-attestation";
-import { ethers } from "ethers";
-import { validateAttestationData } from "../utils/eas-helpers";
+import { prepareSchemaItem, validateAttestationData } from "../utils/eas-helpers";
 import { fetchSchema } from "../eas-schema";
-import { loadFullConfig, BaseConfig } from "../utils/config-helpers"; // Import loadFullConfig and BaseConfig
+import { loadFullConfig, BaseConfig } from "../utils/config-helpers";
 
 // Example script name, used as key in examples.yaml
 const EXAMPLE_SCRIPT_NAME = "create-onchain-attestation";
 
 async function runExampleOnChainAttestation() {
     try {
-        // --- Load Full Configuration from YAML ---
+
         console.log(`\nLoading full configuration from examples.yaml...`);
         const fullConfig = loadFullConfig();
         if (!fullConfig) {
@@ -58,7 +57,7 @@ async function runExampleOnChainAttestation() {
         if (schemaRecord.schema !== schemaStringToValidate) {
             console.warn(`Warning: Schema string in config ("${config.schemaString}") does not match on-chain record ("${schemaRecord.schema}"). Using on-chain schema for validation.`);
         }
-        console.log(`Using schema string for validation:", schemaRecord.schema\n`);
+        console.log(`Using schema string for validation: "${schemaStringToValidate}"\n`);
         // -------------------------------------
 
         // Use the validated fields directly from the config object
@@ -70,16 +69,7 @@ async function runExampleOnChainAttestation() {
         }
         // -------------------------------------
 
-        // 2. Prepare the on-chain attestation data from config
-        // Map the fields from config.fields into the dataToEncode array format
-        const dataToEncode = Object.entries(config.fields).map(([name, value]) => {
-            // Attempt to infer type from the fetched schema record
-            const schemaItem = new ethers.Interface([`function func(${schemaRecord.schema})`]).fragments[0].inputs.find(i => i.name === name);
-            if (!schemaItem) {
-                throw new Error(`Field "${name}" from config not found in schema definition: "${schemaRecord.schema}"`);
-            }
-            return { name, value, type: schemaItem.type };
-        });
+        const dataToEncode = prepareSchemaItem(schemaRecord.schema, config.fields); // Use the validated schema string and fields from config
 
         const attestationData: OnChainAttestationData = {
             recipient: config.recipient!, // Default applied in loadFullConfig
@@ -92,7 +82,6 @@ async function runExampleOnChainAttestation() {
         };
 
         // 3. Create the on-chain attestation
-        console.log("\nAttempting to create on-chain attestation with data:", attestationData);
         const newAttestationUID = await createOnChainAttestation(signer, attestationData);
 
         console.log(`\nExample script finished successfully. Attestation UID: ${newAttestationUID}`);

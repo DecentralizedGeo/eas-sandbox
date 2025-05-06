@@ -2,7 +2,7 @@ import { getProviderSigner } from "../provider";
 import { createOffChainAttestation, OffChainAttestationData } from "../eas-attestation"; // Needed to create the object
 import { saveOffChainAttestation } from "../offchain-storage"; // Assuming this function exists
 import { ethers } from "ethers";
-import { validateAttestationData } from "../utils/eas-helpers";
+import { validateAttestationData, prepareSchemaItem } from "../utils/eas-helpers";
 import { fetchSchema } from "../eas-schema";
 import { loadFullConfig, BaseConfig } from "../utils/config-helpers"; // Import new config helpers
 
@@ -70,11 +70,7 @@ async function runExampleSaveOffChainAttestation() {
         console.log("Data validation successful.");
 
         // 4. Prepare Attestation Data (same as create-offchain)
-        const dataToEncode = Object.entries(config.fields).map(([name, value]) => {
-            const schemaItem = new ethers.Interface([`function func(${schemaRecord.schema})`]).fragments[0].inputs.find(i => i.name === name);
-            if (!schemaItem) throw new Error(`Field "${name}" not found in schema: "${schemaRecord.schema}"`);
-            return { name, value, type: schemaItem.type };
-        });
+        const dataToEncode = prepareSchemaItem(schemaRecord.schema, config.fields!);
 
         const attestationData: OffChainAttestationData = {
             recipient: config.recipient!,

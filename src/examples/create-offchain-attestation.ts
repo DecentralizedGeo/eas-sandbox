@@ -1,15 +1,11 @@
 import { getProviderSigner } from "../provider";
 import { createOffChainAttestation, OffChainAttestationData } from "../eas-attestation";
-import { ethers } from "ethers";
-import { validateAttestationData } from "../utils/eas-helpers";
+import { validateAttestationData, prepareSchemaItem } from "../utils/eas-helpers";
 import { fetchSchema } from "../eas-schema";
-// Remove old config loader if present
-import { loadFullConfig, BaseConfig } from "../utils/config-helpers"; // Import loadFullConfig and BaseConfig
+import { loadFullConfig, BaseConfig } from "../utils/config-helpers";
 
 // Example script name, used as key in examples.yaml
 const EXAMPLE_SCRIPT_NAME = "create-offchain-attestation";
-
-// Remove hardcoded configuration constants (already done)
 
 async function runExampleOffChainAttestation() {
     try {
@@ -64,7 +60,6 @@ async function runExampleOffChainAttestation() {
         console.log("Using schema string for validation:", schemaRecord.schema);
         // -------------------------------------
 
-        // --- Data Validation Step (FR10 - using config) ---
         console.log("\nValidating attestation data against schema...");
         // Use the validated fields directly from the config object
         const isValid = validateAttestationData(schemaRecord.schema, config.fields);
@@ -73,17 +68,9 @@ async function runExampleOffChainAttestation() {
             console.error("Attestation data validation failed. Aborting creation.");
             process.exit(1);
         }
-        console.log("Data validation successful.");
         // -------------------------------------
 
-        // 2. Prepare the off-chain attestation data from config
-        const dataToEncode = Object.entries(config.fields).map(([name, value]) => {
-            const schemaItem = new ethers.Interface([`function func(${schemaRecord.schema})`]).fragments[0].inputs.find(i => i.name === name);
-            if (!schemaItem) {
-                throw new Error(`Field "${name}" from config not found in schema definition: "${schemaRecord.schema}"`);
-            }
-            return { name, value, type: schemaItem.type };
-        });
+        const dataToEncode = prepareSchemaItem(schemaRecord.schema, config.fields);
 
         const attestationData: OffChainAttestationData = {
             recipient: config.recipient!, // Default applied in loadFullConfig
@@ -98,12 +85,7 @@ async function runExampleOffChainAttestation() {
         };
 
         // 3. Create and sign the off-chain attestation
-        console.log("\nAttempting to create and sign off-chain attestation with data:", attestationData);
         const signedOffChainAttestation = await createOffChainAttestation(signer, attestationData);
-
-        console.log("\nOff-chain attestation created and signed successfully:");
-        console.log(JSON.stringify(signedOffChainAttestation, (key, value) =>
-            typeof value === 'bigint' ? value.toString() : value, 2)); // Pretty print with BigInt support
 
     } catch (error) {
         console.error(`\nError running example ${EXAMPLE_SCRIPT_NAME} script:`, error);
