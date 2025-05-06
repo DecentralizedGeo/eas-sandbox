@@ -1,9 +1,8 @@
-import { ethers } from "ethers";
-import { createOnChainAttestation, OnChainAttestationData } from "../eas-attestation";
+import { createOnChainAttestation } from "../eas-attestation";
 import { getProviderSigner } from "../provider";
 import { fetchSchema } from "../eas-schema";
 import { loadFullConfig, BaseConfig } from "../utils/config-helpers";
-import { validateAttestationData } from "../utils/eas-helpers";
+import { validateAttestationData, prepareSchemaItem } from "../utils/eas-helpers";
 
 
 const EXAMPLE_SCRIPT_NAME = "chained-attestation";
@@ -26,7 +25,7 @@ async function runBatchChainedAttestation() {
     const { signer } = getProviderSigner();
 
     for (const [i, att] of batch.attestations.entries()) {
-        // Robust validation
+
         if (!att.schemaUid || typeof att.schemaUid !== "string" || !att.schemaUid.startsWith("0x")) {
             throw new Error(`Attestation #${i}: Invalid or missing schemaUid`);
         }
@@ -42,19 +41,7 @@ async function runBatchChainedAttestation() {
             throw new Error(`Attestation #${i}: Data validation failed`);
         }
 
-        // Prepare dataToEncode
-        const dataToEncode = Object.entries(att.fields).map(([name, value]) => {
-            const schemaItem = new ethers.Interface([`function func(${schemaRecord.schema})`]).fragments[0].inputs.find(i => i.name === name);
-            if (!schemaItem) throw new Error(`Attestation #${i}: Field "${name}" not found in schema`);
-            return { name, value, type: schemaItem.type };
-        });
-
-        // Prepare attestation data
-        //
-        // Note: Ensure that all required fields passed to createOnChainAttestation are strictly typed (not null or undefined).
-        // Using the non-null assertion operator (!) for all required fields. The operator (!) here assumes that
-        // the validation has already ensured these fields are present.
-        // We could perform some additional validation checks before instantiating the attestationData object.
+        const dataToEncode = prepareSchemaItem(schemaRecord.schema, att.fields);
 
         const attestationData = {
             recipient: att.recipient!,
@@ -66,7 +53,6 @@ async function runBatchChainedAttestation() {
             dataToEncode,
         };
 
-        // Create the attestation
         const newAttestationUID = await createOnChainAttestation(signer, attestationData);
         console.log(`Attestation #${i} created. UID: ${newAttestationUID}`);
     }
