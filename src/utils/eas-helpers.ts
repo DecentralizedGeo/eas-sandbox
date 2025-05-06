@@ -122,6 +122,15 @@ export function validateAttestationData(schemaString: string, data: Record<strin
 }
 
 /**
+ * Checks if the provided value is a valid byte32 string.
+ * @param value The value to check.
+ * @returns True if the value is a valid byte32 string, false otherwise.
+ */
+export function isBytes32Check(value: string): boolean {
+    return /^0x[0-9a-fA-F]{64}$/.test(value);
+}
+
+/**
  * Prepares the schema items for the attestation based on the provided schema string and config fields.
  * This function verifies that the fields in the config match the schema and filters out any extra fields.
  * It also ensures that the types are correctly set for the schema items.
