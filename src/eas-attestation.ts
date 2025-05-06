@@ -98,7 +98,7 @@ export async function createOnChainAttestation(
         // Prepare the transaction data without sending by accessing the underlying contract method
         // The wrapper easConnected.attest doesn't have populateTransaction, but the contract method does.
         const txData = await easConnected.contract.attest.populateTransaction(attestationParams);
-        const _estimate = estimateGasCost(provider, signer, txData)
+        const _estimate = await estimateGasCost(provider, signer, txData)
     } catch (error) {
         // Log the txData for debugging if needed (be careful with sensitive data)
         // console.error("Transaction Data:", JSON.stringify(txData));
