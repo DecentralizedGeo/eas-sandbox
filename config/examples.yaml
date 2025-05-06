@@ -104,7 +104,22 @@ save-offchain-attestation:
       notes: "This is a private note."
 
 load-offchain-attestation:
-  - attestationUid: "0x57321fea9593900bc3bc302b797d4f00595278f18de331d5a80c31815d2a0132"
+  # Below are query parameters for loading offchain attestations.
+  # You can use any combination of the following parameters to filter the results:
+  # - schemaUid: The UID of the schema used to create the attestation.
+  # - recipient: The address of the recipient of the attestation.
+  # - attestationUid: The UID of the attestation.
+  # - referenceUid: The UID of the reference attestation (if applicable).
+  #
+  # - If you provide multiple parameters, the results will be filtered to match all of them.
+  # - If you provide no parameters, all offchain attestations will be returned.
+  # - Note: set parameters to empty strings if you don't want to filter by them.
+  #
+  # NOTE: If you haven't saved any offchain attestations, this will return an empty list.
+  - schemaUid: ""
+    recipient: ""
+    attestationUid: ""
+    referenceUid: ""
 
 chained-attestation:
   - attestations:
