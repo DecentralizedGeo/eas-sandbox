@@ -125,12 +125,13 @@ export function validateAttestationData(schemaString: string, data: Record<strin
  * Prepares the schema items for the attestation based on the provided schema string and config fields.
  * This function verifies that the fields in the config match the schema and filters out any extra fields.
  * It also ensures that the types are correctly set for the schema items.
+ * If a `byte32` field value is not a valid `byte32` value, it encodes the value using `ethers.solidityPackedKeccak256`.
  * 
  * @param schemaString The schema definition string (e.g., "string name, uint256 value").
  * @param dataPayload A key/value data object (e.g., { name: "Test", value: 123 }).
  * @returns An array of SchemaItem objects ready for attestation.
  * @throws If there are missing required fields or if the schema is invalid.
- * */
+ */
 export function prepareSchemaItem(schemaString: string, dataPayload: Record<string, any>): SchemaItem[] {
     console.log("Verifying fields against schema...");
     const schemaEncoder = new SchemaEncoder(schemaString);
@@ -159,15 +160,22 @@ export function prepareSchemaItem(schemaString: string, dataPayload: Record<stri
 
     // Create a SchemaItem array for the validated fields
     const validatedSchemaItems = schemaItems.map(item => {
+        let value = validatedFields[item.name];
+
+        // Check if the type is byte32 and if the value is not a valid byte32, encode it
+        if (item.type === "bytes32" && !isBytes32Check(value)) {
+            value = ethers.solidityPackedKeccak256(["string"], [value]);
+        }
+
         return {
             name: item.name,
             type: item.type,
-            value: validatedFields[item.name],
+            value: value,
         };
     });
 
     console.log("Fields verified and filtered against schema successfully.");
-    return validatedSchemaItems;
+    return validatedSchemaItems
 }
 
 /**
