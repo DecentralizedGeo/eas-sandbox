@@ -2,7 +2,7 @@ import { EAS, SchemaEncoder, OffchainAttestationParams, SignedOffchainAttestatio
 import { ethers, Signer } from "ethers";
 import { EASContractAddress } from "./config";
 import { getProviderSigner } from "./provider";
-import { estimateGasCost, reportActualGasCost } from "./utils/eas-helpers";
+import { estimateGasCost, reportActualGasCost, bigIntReplacer } from "./utils/eas-helpers";
 
 // Base interface for attestation data (shared fields)
 export interface BaseAttestationData {
@@ -92,6 +92,7 @@ export async function createOnChainAttestation(
             value: 0n, // This represents the transaction value (in wei). Assuming no ETH value is sent with the attestation.
         },
     };
+    console.log("Attestation Parameters:", attestationParams);
 
     // --- Gas Estimation (FR6) ---
     try {
@@ -176,8 +177,8 @@ export async function createOnChainAttestation(
 
     }
 
-    console.log("Attestation UID:", newAttestationUID);
-    console.log(`\nView your attestation at: https://sepolia.easscan.org/attestation/view/${newAttestationUID}`);
+    console.log("\nAttestation UID:", newAttestationUID);
+    console.log(`View your attestation at: https://sepolia.easscan.org/attestation/view/${newAttestationUID}`);
 
     return newAttestationUID;
 }
@@ -205,8 +206,6 @@ export async function createOffChainAttestation(
     const schemaEncoder = new SchemaEncoder(schemaString);
     const encodedData = schemaEncoder.encodeData(dataToEncode);
 
-    console.log("\nEncoded Schema Data for Off-Chain:", encodedData);
-
     // Prepare parameters for signOffchainAttestation
     const params: OffchainAttestationParams = {
         recipient: recipient,
@@ -218,8 +217,6 @@ export async function createOffChainAttestation(
         time: time ?? BigInt(Math.floor(Date.now() / 1000)), // Use provided time or current time
         // nonce: nonce ?? 0, // Use provided nonce or 0
     };
-
-    console.log("\nSigning off-chain attestation with params:", params);
 
     // Sign the off-chain attestation
     // Note: The signer must be connected to the EAS contract
