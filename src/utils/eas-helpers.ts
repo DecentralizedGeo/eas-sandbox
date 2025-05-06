@@ -207,14 +207,14 @@ export function preparePrivateDataObject(
 ): PrivateData | null {
 
     const merklePayload: MerkleValue[] = data_payload.map(item => ({
-                name: item.name,
-                value: item.value,
-                type: item.type,
-            }));
+        name: item.name,
+        value: item.value,
+        type: item.type,
+    }));
 
     const privateData = new PrivateData(merklePayload);
-        console.log("PrivateData object created successfully.");
-        return privateData;
+    console.log("PrivateData object created successfully.");
+    return privateData;
 }
 
 /**
