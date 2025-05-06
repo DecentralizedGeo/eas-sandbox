@@ -198,7 +198,7 @@ export function preparePrivateDataObject(
  * @param provider The provider to get fee data from.
  * @param signer The signer to use for gas estimation.
  * @param txData The populated transaction data (e.g., from contract.method.populateTransaction(...)).
- * @returns An object containing the estimated gas units (bigint) and the estimated cost in ETH (string).
+ * @returns An object containing the estimated gas units (bigint) and the estimated cost in ETH (Number).
  * @throws If gas estimation fails or fee data cannot be retrieved.
  */
 export async function estimateGasCost(
@@ -209,17 +209,17 @@ export async function estimateGasCost(
     try {
         const estimatedGas = await signer.estimateGas(txData);
         console.log("\n--- Estimated Gas Cost ---");
-        console.log(`Estimated Gas Units: ${estimatedGas.toString()}`);
+        console.log(`Estimated Gas Units: ${Number(estimatedGas.toString()).toLocaleString()}`);
 
         // 2. Estimate cost based on current gas price using the provided provider
         const feeData = await provider.getFeeData();
-        let estimatedCost = "N/A"; // Default value
+        let estimatedCost = 0; // Default value
 
         if (feeData?.gasPrice) {
             const estimatedCostWei = estimatedGas * feeData.gasPrice;
-            estimatedCost = formatUnits(estimatedCostWei, 'ether');
-            console.log(`Current Gas Price (Wei): ${feeData.gasPrice.toString()}`);
-            console.log(`Estimated Transaction Cost (ETH): ${estimatedCost}`);
+            estimatedCost = Number(formatUnits(estimatedCostWei, 'ether'));
+            console.log(`Current Gas Price: ${Number(formatUnits(feeData.gasPrice, 'gwei')).toLocaleString()} Gwei`);
+            console.log(`Estimated Transaction Cost: ${Number(estimatedCost).toLocaleString(undefined, { maximumFractionDigits: 8 })} ETH`);
         } else {
             console.warn("Could not retrieve gas price for estimation.");
             // Decide if this should throw or return default cost
