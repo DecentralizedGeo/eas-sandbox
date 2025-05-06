@@ -205,9 +205,8 @@ export async function estimateGasCost(
     provider: Provider, // Needed for fee data
     signer: Signer,     // Needed for estimation
     txData: ContractTransaction // Accept populated transaction data directly
-): Promise<{ estimatedGas: bigint, estimatedCost: string }> {
+): Promise<{ estimatedGas: bigint, estimatedCost: Number }> {
     try {
-        // 1. Estimate gas using the provided signer and the populated transaction data
         const estimatedGas = await signer.estimateGas(txData);
         console.log("\n--- Estimated Gas Cost ---");
         console.log(`Estimated Gas Units: ${estimatedGas.toString()}`);
