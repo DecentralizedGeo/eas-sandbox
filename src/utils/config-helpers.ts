@@ -21,6 +21,8 @@ export interface BaseConfig {
     // Other identifiers
     attestationUid?: string | null;  // For get, revoke
     resolverAddress?: string | null; // For register-schema
+    createPrivateData?: boolean; // Specify if attestation should be a private data object
+    fieldsToDisclose?: string[] | null; // Specify which fields to disclose in the proof
 }
 
 // --- Default Values --- (Using more specific names to avoid conflicts)
@@ -34,6 +36,8 @@ const DEFAULT_CONFIG_REF_UID: string = ethers.ZeroHash;
 const DEFAULT_CONFIG_PRIVATE_DATA: any | null = null;
 const DEFAULT_CONFIG_ATTESTATION_UID: string | null = null;
 const DEFAULT_CONFIG_RESOLVER: string = ethers.ZeroAddress;
+const DEFAULT_CONFIG_CREATE_PRIVATE_DATA: boolean = false; // Default to false for public attestations
+const DEFAULT_CONFIG_FIELDS_TO_DISCLOSE: string[] | null = null; // Default to null for no fields to disclose
 
 // --- Interface for the entire examples config file structure ---
 // Values are now arrays of BaseConfig after processing.
@@ -92,6 +96,8 @@ export function loadFullConfig(configFilename: string = "examples.yaml"): Exampl
                             privateData: att.privateData ?? DEFAULT_CONFIG_PRIVATE_DATA,
                             attestationUid: att.attestationUid ?? DEFAULT_CONFIG_ATTESTATION_UID,
                             resolverAddress: att.resolverAddress ?? DEFAULT_CONFIG_RESOLVER,
+                            createPrivateData: att.createPrivateData ?? DEFAULT_CONFIG_CREATE_PRIVATE_DATA,
+                            fieldsToDisclose: att.fieldsToDisclose ?? DEFAULT_CONFIG_FIELDS_TO_DISCLOSE,
                         }))
                     };
                 } else {
@@ -107,6 +113,8 @@ export function loadFullConfig(configFilename: string = "examples.yaml"): Exampl
                         privateData: rawConfig.privateData ?? DEFAULT_CONFIG_PRIVATE_DATA,
                         attestationUid: rawConfig.attestationUid ?? DEFAULT_CONFIG_ATTESTATION_UID,
                         resolverAddress: rawConfig.resolverAddress ?? DEFAULT_CONFIG_RESOLVER,
+                        createPrivateData: rawConfig.createPrivateData ?? DEFAULT_CONFIG_CREATE_PRIVATE_DATA,
+                        fieldsToDisclose: rawConfig.fieldsToDisclose ?? DEFAULT_CONFIG_FIELDS_TO_DISCLOSE,
                     };
                 }
             });
