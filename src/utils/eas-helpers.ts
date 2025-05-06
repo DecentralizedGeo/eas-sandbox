@@ -591,3 +591,153 @@ export function generatePrivateDataProof(
         return null;
     }
 }
+
+/**
+ * Extracts coordinates from a GeoJSON Feature or FeatureCollection and scales them to the int40 range.
+ * Supports Polygon geometries, processing only the outer ring.
+ *
+ * @param geojson A GeoJSON Feature or FeatureCollection object.
+ * @returns For a FeatureCollection: An array of coordinate arrays (bigint[][][]), where each inner array represents a feature's outer ring.
+ *          For a Feature: A single coordinate array (bigint[][]) representing the outer ring.
+ *          Returns null if input is invalid, has unsupported geometry, or an error occurs.
+ *          Output format: `bigint[longitude, latitude][]` for a single feature, `bigint[longitude, latitude][][]` for multiple features.
+ */
+export function extractAndScaleCoordinates(geojson: any): bigint[][] | bigint[][][] | null {
+    // Define int40 range using BigInt
+    const MAX_INT40 = (1n << 39n) - 1n; // 2^39 - 1 = 549,755,813,887
+    const MIN_INT40 = -(1n << 39n);    // -2^39 = -549,755,813,888
+    const PRECISION_FACTOR = 10n ** 9n; // Scale by 1e9 to preserve 9 decimal places
+
+    /**
+     * Scales a single coordinate value by multiplying by the precision factor and clamping to int40 range.
+     */
+    function scaleCoordinateToInt40(coord: number): bigint {
+        // Multiply by precision factor, round to nearest integer, convert to BigInt
+        const scaledValue = BigInt(Math.round(coord * Number(PRECISION_FACTOR)));
+
+        // Clamp the final value to the target int40 range
+        if (scaledValue < MIN_INT40) {
+            console.warn(`Coordinate ${coord} scaled to ${scaledValue}, clamping to MIN_INT40 ${MIN_INT40}`);
+            return MIN_INT40;
+        }
+        if (scaledValue > MAX_INT40) {
+            console.warn(`Coordinate ${coord} scaled to ${scaledValue}, clamping to MAX_INT40 ${MAX_INT40}`);
+            return MAX_INT40;
+        }
+        return scaledValue;
+    }
+
+    /**
+     * Processes an array of coordinate pairs (e.g., a Polygon ring), scaling each pair.
+     */
+    function processCoordinatesArray(coords: number[][]): bigint[][] {
+        return coords.map(pair => {
+            // Validate coordinate pair structure
+            if (pair.length !== 2 || typeof pair[0] !== 'number' || typeof pair[1] !== 'number') {
+                console.error("Invalid coordinate pair format:", pair);
+                throw new Error('Invalid coordinate pair found. Expected [longitude, latitude].');
+            }
+            const lon = pair[0];
+            const lat = pair[1];
+
+            // Validate longitude and latitude ranges before scaling
+            if (lon < -180 || lon > 180) {
+                throw new Error(`Invalid longitude: ${lon}. Must be between -180 and 180.`);
+            }
+            if (lat < -90 || lat > 90) {
+                throw new Error(`Invalid latitude: ${lat}. Must be between -90 and 90.`);
+            }
+
+            // Scale longitude and latitude using direct multiplication and clamping
+            const scaledLon = scaleCoordinateToInt40(lon);
+            const scaledLat = scaleCoordinateToInt40(lat);
+            return [scaledLon, scaledLat]; // Return scaled pair [longitude, latitude]
+        });
+    }
+
+    try {
+        // ... existing code for handling FeatureCollection and Feature ...
+        // (No changes needed in the try-catch block structure itself)
+        // Basic validation of the input GeoJSON object
+        if (!geojson || typeof geojson !== 'object') {
+            throw new Error('Invalid GeoJSON input: Input is null or not an object.');
+        }
+
+        // Handle FeatureCollection
+        if (geojson.type === 'FeatureCollection') {
+            if (!Array.isArray(geojson.features)) {
+                throw new Error('Invalid FeatureCollection: Missing or invalid "features" array.');
+            }
+            const multiFeatureCoords: bigint[][][] = [];
+            // Iterate through each feature in the collection
+            for (const feature of geojson.features) {
+                if (feature.type !== 'Feature' || !feature.geometry) {
+                    console.warn('Skipping invalid feature in FeatureCollection (must be type "Feature" with a "geometry"):', feature);
+                    continue; // Skip features that are not valid Features or lack geometry
+                }
+                // Currently supports only Polygon geometry based on requirements
+                if (feature.geometry.type === 'Polygon' && Array.isArray(feature.geometry.coordinates) && feature.geometry.coordinates.length > 0) {
+                    // Process only the outer ring (first element of coordinates array)
+                    const outerRing = feature.geometry.coordinates[0];
+                    if (Array.isArray(outerRing) && outerRing.length > 0) {
+                        try {
+                            // Attempt to process the coordinates for this feature
+                            multiFeatureCoords.push(processCoordinatesArray(outerRing));
+                        } catch (featureError: any) {
+                            // Catch errors from processing a specific feature's coordinates
+                            // Log the error and continue to the next feature
+                            console.warn(`Skipping feature due to error during coordinate processing: ${featureError.message}`, feature);
+                        }
+                    } else {
+                        console.warn('Skipping feature with invalid Polygon coordinates (outer ring is missing or empty):', feature);
+                    }
+                } else {
+                    // Log warning for unsupported or invalid geometries within the collection
+                    console.warn(`Skipping feature: Unsupported geometry type "${feature.geometry?.type}" or invalid/missing coordinates. Only Polygons are currently processed.`);
+                }
+            }
+
+            // Check how many valid features were processed
+            if (multiFeatureCoords.length === 1) {
+                // If exactly one valid feature was found, return its coordinates directly (bigint[][])
+                console.log("FeatureCollection contained exactly one valid Polygon feature. Returning single feature coordinates.");
+                return multiFeatureCoords[0];
+            } else if (multiFeatureCoords.length === 0) {
+                // If no valid features were found, return an empty array (consistent with multi-feature type)
+                console.log("FeatureCollection contained no valid Polygon features to process.");
+                return multiFeatureCoords; // Returns bigint[][][] (empty)
+            } else {
+                // If multiple valid features were found, return the array of coordinate arrays (bigint[][][])
+                console.log(`FeatureCollection contained ${multiFeatureCoords.length} valid Polygon features. Returning multi-feature coordinates.`);
+                return multiFeatureCoords;
+            }
+
+            // Handle single Feature
+        } else if (geojson.type === 'Feature') {
+            if (!geojson.geometry) {
+                throw new Error('Invalid Feature: Missing "geometry".');
+            }
+            // Currently supports only Polygon geometry based on requirements
+            if (geojson.geometry.type === 'Polygon' && Array.isArray(geojson.geometry.coordinates) && geojson.geometry.coordinates.length > 0) {
+                // Process only the outer ring
+                const outerRing = geojson.geometry.coordinates[0];
+                if (Array.isArray(outerRing) && outerRing.length > 0) {
+                    // Return a single coordinate array for the feature
+                    return processCoordinatesArray(outerRing);
+                } else {
+                    throw new Error('Invalid Polygon coordinates: Outer ring is missing or empty.');
+                }
+            } else {
+                // Throw error for unsupported geometry type in single Feature mode
+                throw new Error(`Unsupported geometry type "${geojson.geometry?.type}" or invalid/missing coordinates. Only Polygons are currently processed.`);
+            }
+            // Handle unsupported top-level GeoJSON types
+        } else {
+            throw new Error(`Unsupported GeoJSON type: "${geojson.type}". Expected Feature or FeatureCollection.`);
+        }
+    } catch (error: any) {
+        // Log any errors encountered during processing
+        console.error("Error processing GeoJSON coordinates:", error.message);
+        return null; // Return null to indicate failure
+    }
+}
