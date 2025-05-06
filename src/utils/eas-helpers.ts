@@ -106,12 +106,19 @@ export function validateAttestationData(schemaString: string, data: Record<strin
         const schemaEncoder = new SchemaEncoder(schemaString);
         // The encodeData method implicitly validates types during encoding attempt
         // Map data object to the array format expected by encodeData
-        const dataToEncode = Object.entries(data).map(([name, value]) => ({
-            name,
-            value,
-            type: schemaEncoder.schema.find(item => item.name === name)?.type ?? '' // Infer type from schema for encodeData
-        }));
-        schemaEncoder.encodeData(dataToEncode);
+        // const dataToEncode = Object.entries(data).map(([name, value]) => ({
+        //     name,
+        //     value,
+        //     type: schemaEncoder.schema.find(item => item.name === name)?.type ?? '' // Infer type from schema for encodeData
+        // }));
+        const schemaItem = prepareSchemaItem(schemaString, data); // Validate the schema items against the schema string
+        const validSchema = SchemaEncoder.isSchemaValid(schemaString); // Validate the schema string itself
+        if (!validSchema) {
+            console.error("Invalid schema string provided.");
+            return false;
+        }
+
+        schemaEncoder.encodeData(schemaItem);
         console.log("Data structure appears valid for the schema.");
         // TODO: Add more robust type checking if needed beyond SchemaEncoder's capabilities
         return true;
