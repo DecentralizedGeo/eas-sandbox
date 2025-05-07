@@ -172,13 +172,13 @@ The following scripts in `src/examples/` demonstrate common EAS interactions:
 
 - **`create-onchain-attestation.ts`**:
   - Creates a new attestation on-chain using a specific schema.
-  - Run with: `yarn example:onchain`
-  - **Note:** Configure the `create-onchain-attestation` section in `config/examples.yaml`. Minimally, provide `schemaUid` and `fields`.
+  - Run with: `yarn example:attest-onchain`
+  - **Note:** Configure the `attest-onchain` section in `config/examples.yaml`. Minimally, provide `schemaUid` and `fields`.
 
 - **`get-attestation.ts`**:
   - Fetches the details of an existing on-chain attestation using its UID.
-  - Run with: `yarn example:fetch`
-  - **Note:** Configure the `get-attestation` section in `config/examples.yaml`. Minimally, provide `attestationUid`.
+  - Run with: `yarn example:fetch-attestation`
+  - **Note:** Configure the `fetch-attestation` section in `config/examples.yaml`. Minimally, provide `attestationUid`.
 
 - **`revoke-attestation.ts`**:
   - Revokes an existing on-chain attestation.
@@ -187,8 +187,8 @@ The following scripts in `src/examples/` demonstrate common EAS interactions:
 
 - **`create-offchain-attestation.ts`**:
   - Creates and signs an off-chain attestation. The result is printed to the console but not stored automatically by this script.
-  - Run with: `yarn example:offchain`
-  - **Note:** Configure the `create-offchain-attestation` section in `config/examples.yaml`. Minimally, provide `schemaUid` and `fields`.
+  - Run with: `yarn example:attest-offchain`
+  - **Note:** Configure the `attest-offchain` section in `config/examples.yaml`. Minimally, provide `schemaUid` and `fields`.
 
 - **`save-offchain-attestation.ts`**:
   - Creates a new signed off-chain attestation and then saves it to the local `offchain-attestations.json` file.
@@ -218,17 +218,17 @@ The following scripts in `src/examples/` demonstrate common EAS interactions:
 
 - **`prepare-private-data.ts`**:
   - Shows how to prepare private data for an attestation using the EAS SDK's PrivateData class.
-  - Run with: `yarn example:prepare-private-data`
+  - Run with: `yarn example:create-private-data-object`
   - **Note:** Configure the `create-private-data-object` section in `config/examples.yaml`. Minimally, provide `schemaUid`, `schemaString`, and `fields`.
 
 - **`private-data-proofs.ts`**:
   - Demonstrates creating and verifying proofs for private data attestations.
-  - Run with: `yarn example:private-data-proofs`
+  - Run with: `yarn example:generate-private-data-proofs`
   - **Note:** Configure the `generate-private-data-proofs` section in `config/examples.yaml`. Minimally, provide `schemaUid`, `fields`, and `fieldsToDisclose`.
 
 - **`private-data-proofs-onchain.ts`**:
   - Demonstrates creating and verifying proofs for private data attestations that are stored on-chain. The resulting proof can be used to verify the on-chain attestation.
-  - Run with: `yarn example:private-data-proofs-onchain`
+  - Run with: `yarn example:generate-onchain-private-data-proofs`
   - **Note:** Configure the `generate-onchain-private-data-proofs` section in `config/examples.yaml`. Minimally, provide `schemaUid`, `fields`, and `fieldsToDisclose`.
 
 ### Running workflow examples

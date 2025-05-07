@@ -5,7 +5,7 @@ import { fetchSchema } from "../eas-schema";
 import { loadFullConfig, BaseConfig } from "../utils/config-helpers";
 
 // Example script name, used as key in examples.yaml
-const EXAMPLE_SCRIPT_NAME = "create-offchain-attestation";
+const EXAMPLE_SCRIPT_NAME = "attest-offchain";
 
 async function runExampleOffChainAttestation() {
     try {

@@ -2,8 +2,7 @@ import { getAttestation } from "../eas-attestation";
 import { loadFullConfig, BaseConfig } from "../utils/config-helpers";
 
 // Example script name
-const EXAMPLE_SCRIPT_NAME = "get-attestation";
-
+const EXAMPLE_SCRIPT_NAME = "fetch-attestation";
 
 function bin2string(array: any[]) {
     var result = "";
