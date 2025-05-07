@@ -1,6 +1,10 @@
 # eas-sandbox
 
-**Note:** This proof of concept uses the sepolia testnet. I highly recommend using a faucet to get test funds. Check out [Google&#39;s Faucet](https://cloud.google.com/application/web3/faucet/ethereum/sepolia)
+This repository aims to provide developers with flexible, composable functions for interacting with the [Ethereum Attestation Service (EAS)](https://docs.attest.org/docs/welcome), allowing for quick prototyping and testing of attestation workflows. We've built a modular TypeScript package, wrapping the [Ethereum Attestation Service (EAS) SDK](https://docs.attest.org/docs/developer-tools/eas-sdk#table-of-contents) into a composable set of helper methods, that does much of the heavy lifting for you. This package is designed to be used in conjunction with the EAS SDK, to aid in building real-world applications and workflows.
+
+We've also built a set of configurable example scripts that demonstrate various patterns of interacting with EAS, using the built-in helper functions. The "workflow" examples are more complex but structured to simulate a real-world scenarios and how it would be done with EAS. The goal is to provide a set of building blocks that you can use to become more familiar with the EAS environment and how the EAS SDK can be used.
+
+**Note:** Our work uses the sepolia testnet. I highly recommend using a faucet to get test funds. Check out [Google&#39;s Faucet](https://cloud.google.com/application/web3/faucet/ethereum/sepolia)
 
 ## RPC Provider API key (e.g., Infura, Alchemy)
 
