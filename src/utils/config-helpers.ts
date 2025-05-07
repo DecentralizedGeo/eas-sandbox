@@ -16,7 +16,6 @@ export interface BaseConfig {
     revocable?: boolean;             // For attestations, register-schema
     expirationTime?: bigint;         // For attestations (always converted to BigInt)
     referenceUid?: string | null;    // For attestations
-    privateData?: any | null;        // For private attestations
 
     // Other identifiers
     attestationUid?: string | null;  // For get, revoke
@@ -33,7 +32,6 @@ const DEFAULT_CONFIG_RECIPIENT: string = ethers.ZeroAddress;
 const DEFAULT_CONFIG_REVOCABLE: boolean = true;
 const DEFAULT_CONFIG_EXPIRATION_TIME: bigint = 0n;
 const DEFAULT_CONFIG_REF_UID: string = ethers.ZeroHash;
-const DEFAULT_CONFIG_PRIVATE_DATA: any | null = null;
 const DEFAULT_CONFIG_ATTESTATION_UID: string | null = null;
 const DEFAULT_CONFIG_RESOLVER: string = ethers.ZeroAddress;
 const DEFAULT_CONFIG_CREATE_PRIVATE_DATA: boolean = false; // Default to false for public attestations
@@ -93,7 +91,6 @@ export function loadFullConfig(configFilename: string = "examples.yaml"): Exampl
                             revocable: att.revocable ?? DEFAULT_CONFIG_REVOCABLE,
                             expirationTime: att.expirationTime !== undefined ? BigInt(att.expirationTime) : DEFAULT_CONFIG_EXPIRATION_TIME,
                             referenceUid: att.referenceUid ?? DEFAULT_CONFIG_REF_UID,
-                            privateData: att.privateData ?? DEFAULT_CONFIG_PRIVATE_DATA,
                             attestationUid: att.attestationUid ?? DEFAULT_CONFIG_ATTESTATION_UID,
                             resolverAddress: att.resolverAddress ?? DEFAULT_CONFIG_RESOLVER,
                             createPrivateData: att.createPrivateData ?? DEFAULT_CONFIG_CREATE_PRIVATE_DATA,
@@ -110,7 +107,6 @@ export function loadFullConfig(configFilename: string = "examples.yaml"): Exampl
                         revocable: rawConfig.revocable ?? DEFAULT_CONFIG_REVOCABLE,
                         expirationTime: rawConfig.expirationTime !== undefined ? BigInt(rawConfig.expirationTime) : DEFAULT_CONFIG_EXPIRATION_TIME,
                         referenceUid: rawConfig.referenceUid ?? DEFAULT_CONFIG_REF_UID,
-                        privateData: rawConfig.privateData ?? DEFAULT_CONFIG_PRIVATE_DATA,
                         attestationUid: rawConfig.attestationUid ?? DEFAULT_CONFIG_ATTESTATION_UID,
                         resolverAddress: rawConfig.resolverAddress ?? DEFAULT_CONFIG_RESOLVER,
                         createPrivateData: rawConfig.createPrivateData ?? DEFAULT_CONFIG_CREATE_PRIVATE_DATA,
