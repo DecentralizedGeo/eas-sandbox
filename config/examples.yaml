@@ -678,11 +678,6 @@ gas-cost-comparison:
       #     ]
       #   }
 
-    #   recipient: "0xFD50b031E778fAb33DfD2Fc3Ca66a1EeF0652165"
-    #   eventId: "This is a really cool event!"
-    #   geometryType: "Polygon"
-    #   crs: "EPSG:4326"
-
 # Add other example script configurations here, keyed by script name (without .ts)
 # e.g.:
 # register-schema:
