@@ -5,7 +5,7 @@ import { loadFullConfig, BaseConfig } from "../utils/config-helpers";
 // Example script name
 const EXAMPLE_SCRIPT_NAME = "list-items";
 
-const exampleLimit = 5; // Optional: Limit the number of results per query
+const queryLimit = 10; // Optional: Limit the number of results per query
 
 async function main() {
     console.log("--- Running Listing Examples ---");
@@ -31,13 +31,13 @@ async function main() {
     // ------------------------------------
 
     // Example 1: List attestations for the address (attester or recipient)
-    await listAttestationsForAddress(config.recipient!, 'either', exampleLimit);
+    await listAttestationsForAddress(config.recipient!, 'either', queryLimit);
 
     // Example 2: List schemas created by the address
-    await listSchemasForAddress(config.recipient!, exampleLimit);
+    await listSchemasForAddress(config.recipient!, queryLimit);
 
     // Example 3: List attestations referencing the specific UID
-    await listReferencingAttestations(config.referenceUid!, exampleLimit);
+    await listReferencingAttestations(config.referenceUid!, queryLimit);
 
     console.log("\n--- Listing Examples Complete ---");
 }
