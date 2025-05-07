@@ -23,11 +23,11 @@ Phase 3 of the EAS Sandbox project extends the composable core modules with auxi
 ## General Description
 
 - **Purpose:**
-Enhance the EAS Sandbox by adding helper utilities, workflow orchestration via a recipe manifest, support for chained and private data attestations, and quality-of-life improvements for script and workflow management.
+Enhance the EAS Sandbox by adding helper utilities, workflow orchestration via a Configuration manifest, support for chained and private data attestations, and quality-of-life improvements for script and workflow management.
 - **Scope:**
   - `utils` module for helper and extension functions
   - Chained attestation creation and referencing
-  - Recipe manifest (YAML) for workflow configuration
+  - Configuration manifest (YAML) for workflow configuration
   - Private data attestation support
   - Gas estimation and reporting
   - Improved schema/attestation lookup, verification, and management
@@ -50,7 +50,7 @@ Enhance the EAS Sandbox by adding helper utilities, workflow orchestration via a
 | :-- | :-- | :-- | :-- |
 | FR1 | Implement a `utils` module with helper functions for common EAS coding patterns | High | E.g., schema lookup, attestation validation |
 | FR2 | Enable creation of chained attestations, referencing an origin attestation | High | E.g., multi-step workflows |
-| FR3 | Support a YAML-based recipe manifest for configuring workflow/example script properties | High | See manifest property list below |
+| FR3 | Support a YAML-based Configuration manifest for configuring workflow/example script properties | High | See manifest property list below |
 | FR4 | Allow updating schema and attestation properties via the manifest, not script code | High |  |
 | FR5 | Enable flexible manifest structure to support multiple attestations per workflow | High |  |
 | FR6 | Add gas estimation for attestations before submission | High |  |
@@ -67,7 +67,7 @@ Enhance the EAS Sandbox by adding helper utilities, workflow orchestration via a
 
 ---
 
-### Recipe Manifest Properties
+### Configuration Manifest Properties
 
 The YAML manifest should support the following (with sensible defaults):
 
@@ -137,7 +137,7 @@ The YAML manifest should support the following (with sensible defaults):
 ## Glossary
 
 - **Chained Attestation:** An attestation that references a previous (origin) attestation, forming a chain of verifiable claims.
-- **Recipe Manifest:** A YAML configuration file that defines properties and parameters for workflow/example scripts.
+- **Configuration Manifest:** A YAML configuration file that defines properties and parameters for workflow/example scripts.
 - **Private Data Attestation:** An attestation where the data is encrypted or obfuscated, using the EAS SDK’s PrivateData class.
 - **Resolver Contract:** A smart contract that validates or computes on attested data before confirming or revoking attestations.
 
