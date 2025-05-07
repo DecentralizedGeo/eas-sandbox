@@ -6,6 +6,21 @@ We've also built a set of configurable example scripts that demonstrate various 
 
 **Note:** Our work uses the sepolia testnet. I highly recommend using a faucet to get test funds. Check out [Google&#39;s Faucet](https://cloud.google.com/application/web3/faucet/ethereum/sepolia)
 
+## Table of Contents
+
+- [eas-sandbox](#eas-sandbox)
+  - [Table of Contents](#table-of-contents)
+  - [RPC Provider API key (e.g., Infura, Alchemy)](#rpc-provider-api-key-eg-infura-alchemy)
+  - [Reviewing your attestations and transactions](#reviewing-your-attestations-and-transactions)
+  - [Getting Started](#getting-started)
+    - [Project Structure](#project-structure)
+    - [Setting up your development environment](#setting-up-your-development-environment)
+    - [Installation](#installation)
+    - [Configuration](#configuration)
+  - [Using the Configuration Manifest](#using-the-configuration-manifest)
+  - [Running sample examples](#running-sample-examples)
+  - [Running workflow examples](#running-workflow-examples)
+
 ## RPC Provider API key (e.g., Infura, Alchemy)
 
 Some of the tooling built will require n [Remote Procedure Call](https://www.cyfrin.io/blog/blockchain-rpc-node-guide) provider API key as to interact (read data, send transactions) with blockchain networks (like Ethereum and Sepolia). A RPC provider is a service that runs these nodes and gives you an easy way to connect to the blockchain without running your own node (which can be resource-intensive). Services like [Infura](https://www.infura.io/) and [Alchemy](https://www.alchemy.com/) are popular RPC providers. If you are using [MetaMask](https://metamask.io/) or any other wallet, I recommend creating an account with Infura because of it's integration with MetaMask.
@@ -18,9 +33,7 @@ By default, all transactions have been configured for the Ethereum Sepolia test 
 
 - If you would like to review your transactions, please visit the [Etherscan Sepolia Testnet Explorer](https://sepolia.etherscan.io/). You can search for your wallet address in the search bar to see all the transactions made by your wallet.
 
-## Setting up your development environment
-
-This TypeScript project uses [Yarn](https://yarnpkg.com/) as the package manager.
+## Getting Started
 
 ### Project Structure
 
@@ -39,6 +52,10 @@ This TypeScript project uses [Yarn](https://yarnpkg.com/) as the package manager
   - `examples.yaml`: Configuration manifest for example scripts.
 - `offchain-attestations.json`: Local storage file for off-chain attestations (created when saving).
 - `.env.example`: Example environment file structure.
+
+### Setting up your development environment
+
+This TypeScript project uses [Yarn](https://yarnpkg.com/) as the package manager.
 
 ### Installation
 
@@ -65,7 +82,7 @@ At the minimum, you will need to set the following environment variables:
 
 > NOTE: Ensure your wallet has some test ether from the Ethereum Sepolia test network. You can use a faucet to get some test ether. I recommend using [Google's Faucet](https://cloud.google.com/application/web3/faucet/ethereum/sepolia) to get some test ether.
 
-### Using the Configuration Manifest (`examples.yaml`)
+## Using the Configuration Manifest
 
 To provide a flexible way to configure and run the example scripts without modifying their source code, this project uses a YAML-based configuration manifest file named `examples.yaml`, located in the `config/` directory.
 
@@ -158,7 +175,7 @@ By modifying `config/examples.yaml`, you can run the example scripts with your d
 
 > Note: Properties that are omitted from a given section of the YAML file will use their default values as defined in the code. This allows you to only specify the properties you want to customize while keeping the rest at their defaults.
 
-### Running sample examples
+## Running sample examples
 
 A suite of sample examples are provided in the `examples` directory. These examples demonstrate how to use the EAS SDK to create and verify attestations, as well as how to interact with the Ethereum network. The properties and parameters for these scripts are primarily configured through the `config/examples.yaml` manifest file. Each script looks for a top-level key in the YAML file that matches its filename (e.g., `create-onchain-attestation` for `create-onchain-attestation.ts`).
 
@@ -235,7 +252,7 @@ The following scripts in `src/examples/` demonstrate common EAS interactions:
   - Run with: `yarn example:generate-onchain-private-data-proofs`
   - **Note:** Configure the `generate-onchain-private-data-proofs` section in `config/examples.yaml`. Minimally, provide `schemaUid`, `fields`, and `fieldsToDisclose`.
 
-### Running workflow examples
+## Running workflow examples
 
 The following scripts in `src/workflows/` demonstrate end-to-end use cases leveraging the modular EAS functions:
 
