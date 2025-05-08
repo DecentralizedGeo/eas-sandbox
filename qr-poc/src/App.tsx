@@ -5,8 +5,8 @@ import { NO_EXPIRATION } from "@ethereum-attestation-service/eas-sdk";
 import './App.css';
 
 // Import helpers
-import { SCHEMA_UID } from './lib/config';
-import { createOnChainAttestation, OnChainAttestationData } from './lib/eas-attestation';
+import { SCHEMA_UID } from '../../src/config';
+import { createOnChainAttestation, OnChainAttestationData } from '../../src/eas-attestation';
 
 declare global {
   interface Window {
