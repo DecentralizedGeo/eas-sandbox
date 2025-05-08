@@ -83,7 +83,7 @@ export interface OffChainAttestationQuery {
     uid?: string;
     schema?: string;
     recipient?: string;
-    attester?: string;
+    referenceUid?: string;
     // Add other potential filter fields as needed
 }
 
@@ -107,7 +107,7 @@ export async function loadOffChainAttestations(query?: OffChainAttestationQuery)
         if (query.uid && att.uid !== query.uid) return false;
         if (query.schema && att.message.schema !== query.schema) return false;
         if (query.recipient && att.message.recipient !== query.recipient) return false;
-        // if (query.attester && att.signer !== query.attester) return false; // Assuming signer is the attester
+        if (query.referenceUid && att.message.refUID !== query.referenceUid) return false;
         // Add more filter conditions here
         return true;
     });

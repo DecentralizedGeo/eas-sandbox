@@ -1,50 +1,94 @@
 import { getProviderSigner } from "../provider";
 import { createOffChainAttestation, OffChainAttestationData } from "../eas-attestation";
-import { ethers } from "ethers";
+import { validateAttestationData, prepareSchemaItem } from "../utils/eas-helpers";
+import { fetchSchema } from "../eas-schema";
+import { loadFullConfig, BaseConfig } from "../utils/config-helpers";
 
-// Example usage of the createOffChainAttestation function
-
-// Configuration for this specific example
-const exampleSchemaUID = "0xb16fa048b0d597f5a821747eba64efa4762ee5143e9a80600d0005386edfc995"; // Replace with your actual schema UID
-const exampleSchemaString = "uint256 eventId, uint8 voteIndex"; // Replace with your actual schema string
-const exampleRecipient = "0xFD50b031E778fAb33DfD2Fc3Ca66a1EeF0652165"; // Replace if needed
+// Example script name, used as key in examples.yaml
+const EXAMPLE_SCRIPT_NAME = "attest-offchain";
 
 async function runExampleOffChainAttestation() {
     try {
+        // --- Load Full Configuration from YAML ---
+        console.log(`\nLoading full configuration from examples.yaml...`);
+        const fullConfig = loadFullConfig();
+        if (!fullConfig) {
+            console.error("Failed to load configuration.");
+            process.exit(1);
+        }
+
+        // --- Get Config for this specific script ---
+        const scriptConfigs = fullConfig[EXAMPLE_SCRIPT_NAME];
+        if (!scriptConfigs || scriptConfigs.length === 0) {
+            console.error(`Configuration for "${EXAMPLE_SCRIPT_NAME}" not found or is empty in examples.yaml.`);
+            process.exit(1);
+        }
+
+        // For this example, we use the first config entry.
+        const config: BaseConfig = scriptConfigs[0];
+        console.log(`Using configuration for "${EXAMPLE_SCRIPT_NAME}":`, config);
+        // ------------------------------------
+
+        // --- Script-Specific Validation ---
+        if (!config.schemaUid || typeof config.schemaUid !== 'string' || !config.schemaUid.startsWith('0x')) {
+            console.error(`Error: Invalid or missing 'schemaUid' in config for ${EXAMPLE_SCRIPT_NAME}.`);
+            process.exit(1);
+        }
+        if (!config.fields || typeof config.fields !== 'object' || Object.keys(config.fields).length === 0) {
+            console.error(`Error: Invalid or missing 'fields' in config for ${EXAMPLE_SCRIPT_NAME}.`);
+            process.exit(1);
+        }
+        // ------------------------------------
+
         // 1. Get the provider and signer
         const { signer } = getProviderSigner();
 
-        // 2. Define the off-chain attestation data
+        // --- Schema String Validation Step (using config) ---
+        console.log(`\nFetching schema record for UID: ${config.schemaUid} to verify schema string...`);
+        const schemaRecord = await fetchSchema(config.schemaUid); // Pass validated schemaUid
+
+        if (!schemaRecord) {
+            console.error("Failed to fetch schema record. Aborting creation.");
+            process.exit(1);
+        }
+
+        // Use schemaString from config if available, otherwise use the fetched one
+        const schemaStringToValidate = config.schemaString ?? schemaRecord.schema;
+        if (schemaRecord.schema !== schemaStringToValidate) {
+            console.warn(`Warning: Schema string in config ("${config.schemaString}") does not match on-chain record ("${schemaRecord.schema}"). Using on-chain schema for validation.`);
+        }
+        console.log("Using schema string for validation:", schemaRecord.schema);
+        // -------------------------------------
+
+        console.log("\nValidating attestation data against schema...");
+        // Use the validated fields directly from the config object
+        const isValid = validateAttestationData(schemaRecord.schema, config.fields);
+
+        if (!isValid) {
+            console.error("Attestation data validation failed. Aborting creation.");
+            process.exit(1);
+        }
+        // -------------------------------------
+
+        const dataToEncode = prepareSchemaItem(schemaRecord.schema, config.fields);
+
         const attestationData: OffChainAttestationData = {
-            recipient: exampleRecipient,
-            expirationTime: 0n, // Use 0n for no expiration (BigInt)
-            revocable: true,
-            schemaUID: exampleSchemaUID,
-            schemaString: exampleSchemaString,
-            refUID: ethers.ZeroHash, // Optional: Reference another attestation UID if needed
-            time: BigInt(Math.floor(Date.now() / 1000)), // Optional: Use current time or specify a time
-            //   nonce: 0, // Optional: Use a specific nonce if needed
-            dataToEncode: [
-                // Update these values according to your schemaString
-                { name: "eventId", value: 999, type: "uint256" }, // Example data
-                { name: "voteIndex", value: 2, type: "uint8" },   // Example data
-            ],
+            recipient: config.recipient!, // Default applied in loadFullConfig
+            expirationTime: config.expirationTime!, // Default applied & converted in loadFullConfig
+            revocable: config.revocable!, // Default applied in loadFullConfig
+            schemaUID: config.schemaUid, // Validated above
+            schemaString: schemaRecord.schema, // Use the validated on-chain schema string
+            refUID: config.referenceUid!, // Default applied in loadFullConfig
+            time: BigInt(Math.floor(Date.now() / 1000)), // Add current time for off-chain
+            // nonce: 0, // Optional: Can be added to config if needed
+            dataToEncode: dataToEncode,
         };
 
         // 3. Create and sign the off-chain attestation
-        console.log("\nAttempting to create and sign off-chain attestation...");
         const signedOffChainAttestation = await createOffChainAttestation(signer, attestationData);
 
-        console.log("\nOff-chain attestation created and signed successfully:");
-        console.log(JSON.stringify(signedOffChainAttestation, (key, value) =>
-            typeof value === 'bigint' ? value.toString() : value, 2)); // Pretty print with BigInt support
-
-        // Note: This signed attestation can now be stored or transmitted off-chain.
-        // Verification would typically involve recovering the signer address from the signature
-        // and checking it against an expected address, as well as verifying the data itself.
-
     } catch (error) {
-        console.error("\nError running example off-chain attestation script:", error);
+        console.error(`\nError running example ${EXAMPLE_SCRIPT_NAME} script:`, error);
         process.exit(1);
     }
 }

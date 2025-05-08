@@ -1,45 +1,64 @@
 import { getProviderSigner } from "../provider";
 import { revokeOnChainAttestation, RevocationData } from "../eas-attestation";
+import { loadFullConfig, BaseConfig } from "../utils/config-helpers"; // Import loadFullConfig and BaseConfig
 
-// Example usage of the revokeOnChainAttestation function
+// Example script name
+const EXAMPLE_SCRIPT_NAME = "revoke-attestation";
 
-// --- Configuration --- Replace with the details of the attestation you want to revoke
-const schemaUID = "0xb16fa048b0d597f5a821747eba64efa4762ee5143e9a80600d0005386edfc995"; // Example Schema UID - Replace with the correct schema UID
-// const attestationUID = "REPLACE_WITH_ATTESTATION_UID_TO_REVOKE"; // Example Attestation UID - Replace this!
-const attestationUID = "0xa7dd07622f1bd742617a2311bc6b59108fe0e511859362d62da5d5e1cfdfb307"; // Example Attestation UID - Replace this!
-// ---------------------
+// Remove hardcoded configuration constants (already done)
 
 async function runExampleRevokeAttestation() {
-    if (!schemaUID || schemaUID.startsWith("REPLACE")) {
-        console.error("Error: Please replace the placeholder schemaUID in the script.");
-        process.exit(1);
-    }
-    if (!attestationUID || attestationUID.startsWith("REPLACE")) {
-        console.error("Error: Please replace the placeholder attestationUID in the script with the one you want to revoke.");
-        process.exit(1);
-    }
-
     try {
+        // --- Load Full Configuration from YAML ---
+        console.log(`\nLoading full configuration from examples.yaml...`);
+        const fullConfig = loadFullConfig();
+        if (!fullConfig) {
+            console.error("Failed to load configuration.");
+            process.exit(1);
+        }
+
+        // --- Get Config for this specific script ---
+        const scriptConfigs = fullConfig[EXAMPLE_SCRIPT_NAME];
+        if (!scriptConfigs || scriptConfigs.length === 0) {
+            console.error(`Configuration for "${EXAMPLE_SCRIPT_NAME}" not found or is empty in examples.yaml.`);
+            process.exit(1);
+        }
+
+        // For this example, process the first config entry.
+        const config: BaseConfig = scriptConfigs[0];
+        console.log(`Using configuration for "${EXAMPLE_SCRIPT_NAME}":`, config);
+        // ------------------------------------
+
+        // --- Script-Specific Validation ---
+        if (!config.attestationUid || typeof config.attestationUid !== 'string' || !config.attestationUid.startsWith('0x')) {
+            console.error(`Error: Invalid or missing 'attestationUid' in config for ${EXAMPLE_SCRIPT_NAME}.`);
+            process.exit(1);
+        }
+
+        if (!config.schemaUid || typeof config.schemaUid !== 'string') {
+            console.error(`Error: Invalid or missing 'attestationUid' in config for ${EXAMPLE_SCRIPT_NAME}.`);
+            process.exit(1);
+        }
+
+        // ------------------------------------
+
         // 1. Get the provider and signer
         const { signer } = getProviderSigner();
-        console.log(`\nUsing signer: ${signer.address} to revoke attestation.`);
 
-        // 2. Define the revocation data
+        // 2. Define the revocation data from config
         const revocationData: RevocationData = {
-            schemaUID: schemaUID,
-            uid: attestationUID,
+            schemaUID: config.schemaUid,
+            uid: config.attestationUid,
         };
 
-        // 3. Revoke the on-chain attestation
-        console.log(`\nAttempting to revoke attestation with UID: ${attestationUID}...`);
-        await revokeOnChainAttestation(signer, revocationData);
+        // 3. Revoke the attestation using the UID from the config
+        console.log(`\nAttempting to revoke attestation with UID: ${config.attestationUid}...`);
+        await revokeOnChainAttestation(signer, revocationData); // Pass validated attestationUid
 
-        console.log(`\nExample script finished successfully. Attestation ${attestationUID} should now be revoked.`);
-        console.log(`Verify revocation status at: https://sepolia.easscan.org/attestation/view/${attestationUID}`);
-
+        console.log(`\nExample script ${EXAMPLE_SCRIPT_NAME} finished successfully.`);
 
     } catch (error) {
-        console.error("\nError running example revokeAttestation script:", error);
+        console.error(`\nError running example ${EXAMPLE_SCRIPT_NAME} script:`, error);
         process.exit(1);
     }
 }

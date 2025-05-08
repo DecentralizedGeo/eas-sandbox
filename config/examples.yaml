@@ -1,0 +1,679 @@
+# Configuration for example scripts
+
+attest-onchain:
+  # - schemaString: "string location, uint256 timestamp, string notes"
+  #   schemaUid: "0xb08ebaac3deb3ed7e125d076eb7b0cbe4f0e66aff74d8dd38c6214fd9d162587"
+  #   fields:
+  #     location: "New York"
+  #     timestamp: 1633072800
+  #     notes: "This is a private note."
+  #   revocable: true
+  - schemaString: "bytes32 eventId, int40[2][][] coordinates, string geometryType, string crs"
+    schemaUid: "0xc04a24715ae76ee0eb73d7d985b7c4d13430c43c15d6cc71beb9896080b6b8d4"
+    fields:
+      eventId: "This is a really cool event!"
+      coordinates:
+        [
+          [
+            [-71099920287, 42357281791],
+            [-71099920287, 42356854509],
+            [-71099045620, 42356854509],
+            [-71099045620, 42357281791],
+            [-71099920287, 42357281791],
+          ],
+          [
+            [-71099488030, 42356728102],
+            [-71099488030, 42356496024],
+            [-71099093256, 42356496024],
+            [-71099093256, 42356728102],
+            [-71099488030, 42356728102],
+          ],
+        ]
+      geometryType: "Polygon"
+      crs: "EPSG:4326"
+
+attest-offchain:
+  - schemaUid: "0xb16fa048b0d597f5a821747eba64efa4762ee5143e9a80600d0005386edfc995"
+    schemaString: "uint256 eventId, uint8 voteIndex"
+    recipient: "0xFD50b031E778fAb33DfD2Fc3Ca66a1EeF0652165"
+    revocable: true
+    expirationTime: 0
+    fields:
+      eventId: 999
+      voteIndex: 2
+
+register-schema:
+  # - schemaString: "string location, uint256 timestamp, string notes"
+  #   revocable: true
+  #   fields:
+  #     location: "New York"
+  #     timestamp: 1633072800
+  #     notes: "This is a private note."
+  - schemaString: "uint256 eventId, uint8 voteIndex"
+    revocable: true
+
+fetch-schema:
+  - schemaUid: "0x5b647b9b8af5e81437c66f7d9334ee237bd0fc18134a54a5a9870cde8d4e4584"
+  # - schemaString: "bytes32 eventId, int40[2][] coordinates, string geometryType" // Example to fetch schema UID by schema string
+
+fetch-attestation:
+  - attestationUid: "0x57321fea9593900bc3bc302b797d4f00595278f18de331d5a80c31815d2a0132"
+
+revoke-attestation:
+  - schemaUid: "0xb16fa048b0d597f5a821747eba64efa4762ee5143e9a80600d0005386edfc995"
+    attestationUid: "0x57321fea9593900bc3bc302b797d4f00595278f18de331d5a80c31815d2a0132"
+
+save-offchain-attestation:
+  # - schemaString: "bytes32 eventId, int40[2][][] coordinates, string geometryType, string crs"
+  #   schemaUid: "0xc04a24715ae76ee0eb73d7d985b7c4d13430c43c15d6cc71beb9896080b6b8d4"
+  #   fields:
+  #     eventId: "Enter an event name here"
+  #     coordinates:
+  #       [
+  #         [
+  #           [-71099920287, 42357281791],
+  #           [-71099920287, 42356854509],
+  #           [-71099045620, 42356854509],
+  #           [-71099045620, 42357281791],
+  #           [-71099920287, 42357281791],
+  #         ],
+  #         [
+  #           [-71099488030, 42356728102],
+  #           [-71099488030, 42356496024],
+  #           [-71099093256, 42356496024],
+  #           [-71099093256, 42356728102],
+  #           [-71099488030, 42356728102],
+  #         ],
+  #       ]
+  #     geometryType: "Polygon"
+  #     crs: "EPSG:4326"
+  - schemaUid: "0xb08ebaac3deb3ed7e125d076eb7b0cbe4f0e66aff74d8dd38c6214fd9d162587"
+    referenceUid: "0x5b647b9b8af5e81437c66f7d9334ee237bd0fc18134a54a5a9870cde8d4e4584"
+    schemaString: "string location, uint256 timestamp, string notes"
+    revocable: true
+    fields:
+      location: "New York"
+      timestamp: 1633072800
+      notes: "This is a private note."
+
+load-offchain-attestation:
+  # Below are query parameters for loading offchain attestations.
+  # You can use any combination of the following parameters to filter the results:
+  # - schemaUid: The UID of the schema used to create the attestation.
+  # - recipient: The address of the recipient of the attestation.
+  # - attestationUid: The UID of the attestation.
+  # - referenceUid: The UID of the reference attestation (if applicable).
+  #
+  # - If you provide multiple parameters, the results will be filtered to match all of them.
+  # - If you provide no parameters, all offchain attestations will be returned.
+  # - Note: set parameters to empty strings if you don't want to filter by them.
+  #
+  # NOTE: If you haven't saved any offchain attestations, this will return an empty list.
+  - schemaUid: ""
+    recipient: ""
+    attestationUid: ""
+    referenceUid: ""
+
+chained-attestation:
+  - attestations:
+      - schemaUid: "0xb16fa048b0d597f5a821747eba64efa4762ee5143e9a80600d0005386edfc995"
+        schemaString: "uint256 eventId, uint8 voteIndex"
+        referenceUid: "0x5b647b9b8af5e81437c66f7d9334ee237bd0fc18134a54a5a9870cde8d4e4584"
+        fields:
+          eventId: 999
+          voteIndex: 2
+      - schemaUid: "0xb08ebaac3deb3ed7e125d076eb7b0cbe4f0e66aff74d8dd38c6214fd9d162587"
+        referenceUid: "0x5b647b9b8af5e81437c66f7d9334ee237bd0fc18134a54a5a9870cde8d4e4584"
+        schemaString: "string location, uint256 timestamp, string notes"
+        revocable: true
+        fields:
+          location: "New York"
+          timestamp: 1633072800
+          notes: "This is a private note."
+
+list-items:
+  - recipient: "0x3074C8732366cE5DB80986aBA8FB69897872DdB9"
+    referenceUid: "0xeeb457f8a9c5c9312010d69e0f7ab1119dcde9b5af421693939460ec6ce38fcf"
+
+create-private-data-object:
+  - schemaUid: "0xb08ebaac3deb3ed7e125d076eb7b0cbe4f0e66aff74d8dd38c6214fd9d162587"
+    schemaString: "string location, uint256 timestamp, string notes"
+    fields:
+      location: "New York"
+      timestamp: 1633072800
+      notes: "This is a private note."
+    revocable: true
+
+generate-private-data-proofs:
+  - schemaUid: "0xb08ebaac3deb3ed7e125d076eb7b0cbe4f0e66aff74d8dd38c6214fd9d162587"
+    schemaString: "string location, uint256 timestamp, string notes"
+    fields:
+      location: "New York"
+      timestamp: 163307280
+      notes: "This is a private note."
+    revocable: true
+    fieldsToDisclose: ["location", "timestamp"]
+
+generate-onchain-private-data-proofs:
+  - schemaString: "bytes32 eventId, int40[2][][] coordinates, string geometryType, string crs"
+    schemaUid: "0xc04a24715ae76ee0eb73d7d985b7c4d13430c43c15d6cc71beb9896080b6b8d4"
+    fields:
+      eventId: "Enter an event name here"
+      coordinates:
+        [
+          [
+            [-71099920287, 42357281791],
+            [-71099920287, 42356854509],
+            [-71099045620, 42356854509],
+            [-71099045620, 42357281791],
+            [-71099920287, 42357281791],
+          ],
+          [
+            [-71099488030, 42356728102],
+            [-71099488030, 42356496024],
+            [-71099093256, 42356496024],
+            [-71099093256, 42356728102],
+            [-71099488030, 42356728102],
+          ],
+        ]
+      geometryType: "Polygon"
+      crs: "EPSG:4326"
+    revocable: true
+    fieldsToDisclose: ["geometryType", "crs"]
+
+  # - schemaUid: "0xb08ebaac3deb3ed7e125d076eb7b0cbe4f0e66aff74d8dd38c6214fd9d162587"
+  #   schemaString: "string location, uint256 timestamp, string notes"
+  #   fields:
+  #     location: "New York"
+  #     timestamp: 163307280
+  #     notes: "This is a private note."
+  #   revocable: true
+  #   fieldsToDisclose: ["location", "timestamp"]
+
+gas-cost-comparison:
+  # Below are two example geosjon objects to be used for gas comparison.
+  - fields:
+      coordinates: |
+        {
+          "type": "FeatureCollection",
+          "features":
+            [
+              {
+                "type": "Feature",
+                "properties": {},
+                "geometry":
+                  {
+                    "coordinates":
+                      [
+                        [
+                          [-71.09992028737877, 42.35728179069244],
+                          [-71.09992028737877, 42.35685450937632],
+                          [-71.09904562029875, 42.35685450937632],
+                          [-71.09904562029875, 42.35728179069244],
+                          [-71.09992028737877, 42.35728179069244]
+                        ]
+                      ],
+                    "type": "Polygon"
+                  }
+              },
+              {
+                "type": "Feature",
+                "properties": {},
+                "geometry":
+                  {
+                    "coordinates":
+                      [
+                        [
+                          [-71.09948802976496, 42.35672810199296],
+                          [-71.09948802976496, 42.35649602365416],
+                          [-71.0990932555289, 42.35649602365416],
+                          [-71.0990932555289, 42.35672810199296],
+                          [-71.09948802976496, 42.35672810199296]
+                        ]
+                      ],
+                    "type": "Polygon"
+                  }
+              }
+            ]
+        }
+      # coordinates: |
+      #   {
+      #     "type": "FeatureCollection",
+      #     "features": [
+      #       {
+      #         "type": "Feature",
+      #         "properties": {},
+      #         "geometry": {
+      #           "coordinates": [
+      #             [
+      #               [
+      #                 -71.10235994953466,
+      #                 42.35626574424418
+      #               ],
+      #               [
+      #                 -71.10192431066274,
+      #                 42.35576428373412
+      #               ],
+      #               [
+      #                 -71.10080170279953,
+      #                 42.35631527099068
+      #               ],
+      #               [
+      #                 -71.10126247468384,
+      #                 42.35683529947602
+      #               ],
+      #               [
+      #                 -71.10235994953466,
+      #                 42.35626574424418
+      #               ]
+      #             ]
+      #           ],
+      #           "type": "Polygon"
+      #         }
+      #       },
+      #       {
+      #         "type": "Feature",
+      #         "properties": {},
+      #         "geometry": {
+      #           "coordinates": [
+      #             [
+      #               [
+      #                 -71.10044775080074,
+      #                 42.357227018598934
+      #               ],
+      #               [
+      #                 -71.10106956844271,
+      #                 42.35688889692781
+      #               ],
+      #               [
+      #                 -71.10090238162381,
+      #                 42.35671983541002
+      #               ],
+      #               [
+      #                 -71.10077332513195,
+      #                 42.356635304481074
+      #               ],
+      #               [
+      #                 -71.10056214178199,
+      #                 42.35658545285372
+      #               ],
+      #               [
+      #                 -71.10045068390338,
+      #                 42.356576783001316
+      #               ],
+      #               [
+      #                 -71.10033629292211,
+      #                 42.356576783001316
+      #               ],
+      #               [
+      #                 -71.1001280426741,
+      #                 42.35663096955818
+      #               ],
+      #               [
+      #                 -71.09995498965124,
+      #                 42.3567285052427
+      #               ],
+      #               [
+      #                 -71.10034215912607,
+      #                 42.35720534418766
+      #               ],
+      #               [
+      #                 -71.10036562394257,
+      #                 42.357227018598934
+      #               ],
+      #               [
+      #                 -71.10040668737165,
+      #                 42.357237855802026
+      #               ],
+      #               [
+      #                 -71.10044775080074,
+      #                 42.357227018598934
+      #               ]
+      #             ]
+      #           ],
+      #           "type": "Polygon"
+      #         }
+      #       },
+      #       {
+      #         "type": "Feature",
+      #         "properties": {},
+      #         "geometry": {
+      #           "coordinates": [
+      #             [
+      #               [
+      #                 -71.09867170538043,
+      #                 42.357863230981536
+      #               ],
+      #               [
+      #                 -71.09869517019693,
+      #                 42.35774402283275
+      #               ],
+      #               [
+      #                 -71.09865703986986,
+      #                 42.35764648872444
+      #               ],
+      #               [
+      #                 -71.09860717713484,
+      #                 42.35758363332974
+      #               ],
+      #               [
+      #                 -71.09851038476612,
+      #                 42.35750777328738
+      #               ],
+      #               [
+      #                 -71.09836666276374,
+      #                 42.35747526181265
+      #               ],
+      #               [
+      #                 -71.09825227178246,
+      #                 42.357462257217975
+      #               ],
+      #               [
+      #                 -71.09698517168329,
+      #                 42.35787623549325
+      #               ],
+      #               [
+      #                 -71.09691477723305,
+      #                 42.35793258834602
+      #               ],
+      #               [
+      #                 -71.09684438278288,
+      #                 42.358077805079716
+      #               ],
+      #               [
+      #                 -71.09683265037492,
+      #                 42.358175338518606
+      #               ],
+      #               [
+      #                 -71.09688544621258,
+      #                 42.35826420218649
+      #               ],
+      #               [
+      #                 -71.09700863649982,
+      #                 42.358361735336075
+      #               ],
+      #               [
+      #                 -71.09712009437908,
+      #                 42.3584029159538
+      #               ],
+      #               [
+      #                 -71.09722861915573,
+      #                 42.358424589951994
+      #               ],
+      #               [
+      #                 -71.09736060874953,
+      #                 42.3584029159538
+      #               ],
+      #               [
+      #                 -71.09856024750114,
+      #                 42.35799544339119
+      #               ],
+      #               [
+      #                 -71.09863357505333,
+      #                 42.357919583845984
+      #               ],
+      #               [
+      #                 -71.09867170538043,
+      #                 42.357863230981536
+      #               ]
+      #             ]
+      #           ],
+      #           "type": "Polygon"
+      #         }
+      #       },
+      #       {
+      #         "type": "Feature",
+      #         "properties": {},
+      #         "geometry": {
+      #           "coordinates": [
+      #             [
+      #               [
+      #                 -71.09750194910806,
+      #                 42.357503902659545
+      #               ],
+      #               [
+      #                 -71.09720863889994,
+      #                 42.35699888915394
+      #               ],
+      #               [
+      #                 -71.0959914015358,
+      #                 42.35740853561302
+      #               ],
+      #               [
+      #                 -71.09632284207098,
+      #                 42.35791137840894
+      #               ],
+      #               [
+      #                 -71.09750194910806,
+      #                 42.357503902659545
+      #               ]
+      #             ]
+      #           ],
+      #           "type": "Polygon"
+      #         }
+      #       },
+      #       {
+      #         "type": "Feature",
+      #         "properties": {},
+      #         "geometry": {
+      #           "coordinates": [
+      #             [
+      #               [
+      #                 -71.09599692875047,
+      #                 42.35726562409755
+      #               ],
+      #               [
+      #                 -71.09589720327976,
+      #                 42.35706838679832
+      #               ],
+      #               [
+      #                 -71.09577401299191,
+      #                 42.35710089848399
+      #               ],
+      #               [
+      #                 -71.09590306948377,
+      #                 42.35729163336558
+      #               ],
+      #               [
+      #                 -71.09599692875047,
+      #                 42.35726562409755
+      #               ]
+      #             ]
+      #           ],
+      #           "type": "Polygon"
+      #         }
+      #       },
+      #       {
+      #         "type": "Feature",
+      #         "properties": {},
+      #         "geometry": {
+      #           "coordinates": [
+      #             [
+      #               [
+      #                 -71.09616411556941,
+      #                 42.35720276832237
+      #               ],
+      #               [
+      #                 -71.09605852389409,
+      #                 42.35701853551507
+      #               ],
+      #               [
+      #                 -71.09594119981082,
+      #                 42.35704887977923
+      #               ],
+      #               [
+      #                 -71.09606732320067,
+      #                 42.35725045201963
+      #               ],
+      #               [
+      #                 -71.09616411556941,
+      #                 42.35720276832237
+      #               ]
+      #             ]
+      #           ],
+      #           "type": "Polygon"
+      #         }
+      #       },
+      #       {
+      #         "type": "Feature",
+      #         "properties": {},
+      #         "geometry": {
+      #           "coordinates": [
+      #             [
+      #               [
+      #                 -71.09632836928569,
+      #                 42.35714858225856
+      #               ],
+      #               [
+      #                 -71.09621984450835,
+      #                 42.35696001439268
+      #               ],
+      #               [
+      #                 -71.09609958732314,
+      #                 42.35698819123624
+      #               ],
+      #               [
+      #                 -71.09622277761102,
+      #                 42.357181093902255
+      #               ],
+      #               [
+      #                 -71.09632836928569,
+      #                 42.35714858225856
+      #               ]
+      #             ]
+      #           ],
+      #           "type": "Polygon"
+      #         }
+      #       },
+      #       {
+      #         "type": "Feature",
+      #         "properties": {},
+      #         "geometry": {
+      #           "coordinates": [
+      #             [
+      #               [
+      #                 -71.09648675679796,
+      #                 42.35709439614803
+      #               ],
+      #               [
+      #                 -71.09639289753123,
+      #                 42.35690582811955
+      #               ],
+      #               [
+      #                 -71.09626677414208,
+      #                 42.35694267479002
+      #               ],
+      #               [
+      #                 -71.09639289753123,
+      #                 42.35712907526434
+      #               ],
+      #               [
+      #                 -71.09648675679796,
+      #                 42.35709439614803
+      #               ]
+      #             ]
+      #           ],
+      #           "type": "Polygon"
+      #         }
+      #       },
+      #       {
+      #         "type": "Feature",
+      #         "properties": {},
+      #         "geometry": {
+      #           "coordinates": [
+      #             [
+      #               [
+      #                 -71.09665394361687,
+      #                 42.357046712332334
+      #               ],
+      #               [
+      #                 -71.09655421814621,
+      #                 42.356849474346035
+      #               ],
+      #               [
+      #                 -71.09643102785834,
+      #                 42.35688198614449
+      #               ],
+      #               [
+      #                 -71.09655128504426,
+      #                 42.357072721691
+      #               ],
+      #               [
+      #                 -71.09665394361687,
+      #                 42.357046712332334
+      #               ]
+      #             ]
+      #           ],
+      #           "type": "Polygon"
+      #         }
+      #       },
+      #       {
+      #         "type": "Feature",
+      #         "properties": {},
+      #         "geometry": {
+      #           "coordinates": [
+      #             [
+      #               [
+      #                 -71.0968152642312,
+      #                 42.356983856337735
+      #               ],
+      #               [
+      #                 -71.09670673945458,
+      #                 42.356795287977604
+      #               ],
+      #               [
+      #                 -71.09658941537133,
+      #                 42.35682563234957
+      #               ],
+      #               [
+      #                 -71.0967155387605,
+      #                 42.35701853551507
+      #               ],
+      #               [
+      #                 -71.0968152642312,
+      #                 42.356983856337735
+      #               ]
+      #             ]
+      #           ],
+      #           "type": "Polygon"
+      #         }
+      #       },
+      #       {
+      #         "type": "Feature",
+      #         "properties": {},
+      #         "geometry": {
+      #           "coordinates": [
+      #             [
+      #               [
+      #                 -71.09965140998939,
+      #                 42.356426223721655
+      #               ],
+      #               [
+      #                 -71.09940943773636,
+      #                 42.35603435190711
+      #               ],
+      #               [
+      #                 -71.09820393277015,
+      #                 42.356454310573724
+      #               ],
+      #               [
+      #                 -71.0984503133452,
+      #                 42.35684228604572
+      #               ],
+      #               [
+      #                 -71.09965140998939,
+      #                 42.356426223721655
+      #               ]
+      #             ]
+      #           ],
+      #           "type": "Polygon"
+      #         }
+      #       }
+      #     ]
+      #   }
+
+# Add other example script configurations here, keyed by script name (without .ts)
+# e.g.:
+# register-schema:
+#   - schema: "string message"
+#     revocable: false

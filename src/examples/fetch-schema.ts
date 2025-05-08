@@ -1,37 +1,55 @@
-import { fetchSchema } from "../eas-schema";
+import { fetchSchema, checkExistingSchema } from "../eas-schema";
+import { displaySchemaDetails } from "../utils/eas-helpers";
+import { loadFullConfig, BaseConfig } from "../utils/config-helpers";
 
-// Example usage of the getSchema function
+// Specify the section name that you want to use in the examples.yaml file
+const EXAMPLE_SCRIPT_NAME = "fetch-schema";
 
-// --- Configuration --- Replace with the UID of a schema you want to fetch
-// const schemaUID = "REPLACE_WITH_SCHEMA_UID"; // Example UID - Replace this!
-const schemaUID = "0xba4171c92572b1e4f241d044c32cdf083be9fd946b8766977558ca6378c824e2"; // Example UID - Replace this!
-// ---------------------
 
-async function runExampleGetSchema() {
-    if (!schemaUID || schemaUID.startsWith("REPLACE")) {
-        console.error("Error: Please replace the placeholder schemaUID in the script with a real one.");
-        process.exit(1);
-    }
-
+async function runExampleFetchSchema() {
     try {
-        console.log(`\nAttempting to fetch schema with UID: ${schemaUID}...`);
-
-        // Fetch the schema
-        const schemaRecord = await fetchSchema(schemaUID);
-
-        if (schemaRecord) {
-            console.log("\nSchema fetched successfully:");
-            // Pretty print the schema record object, handling BigInts if any were present (though unlikely in SchemaRecord)
-            console.log(JSON.stringify(schemaRecord, (key, value) =>
-                typeof value === 'bigint' ? value.toString() : value, 2));
-        } else {
-            console.log(`\nSchema with UID ${schemaUID} could not be found.`);
+        // --- Load Full Configuration from YAML ---
+        const fullConfig = loadFullConfig();
+        if (!fullConfig) {
+            console.error("Failed to load configuration.");
+            process.exit(1);
         }
 
+        // --- Get Config for this specific script ---
+        const scriptConfigs = fullConfig[EXAMPLE_SCRIPT_NAME];
+        if (!scriptConfigs || scriptConfigs.length === 0) {
+            console.error(`Configuration for "${EXAMPLE_SCRIPT_NAME}" not found or is empty in examples.yaml.`);
+            process.exit(1);
+        }
+
+        // For this example, process the first config entry.
+        const config: BaseConfig = scriptConfigs[0];
+        console.log(`Using configuration for "${EXAMPLE_SCRIPT_NAME}":`, config);
+        // ------------------------------------
+
+        if (!config.schemaUid && !config.schemaString) {
+            console.error(`Error: Neither 'schemaUid' nor 'schemaString' provided in config for ${EXAMPLE_SCRIPT_NAME}.`);
+            process.exit(1);
+        }
+        if (config.schemaUid) {
+            console.log(`\nAttempting to fetch schema with UID: ${config.schemaUid}`);
+            const schemaRecord = await fetchSchema(config.schemaUid);
+            if (schemaRecord) {
+                console.log("\nSchema fetched successfully:");
+                displaySchemaDetails(schemaRecord.uid);
+            } else {
+                console.log(`\nSchema with UID ${config.schemaUid} could not be fetched or was not found.`);
+            }
+        } else if (config.schemaString) {
+            console.log(`\nIdentifying what the schema UID is for "${config.schemaString}"`);
+            checkExistingSchema(config.schemaString);
+
+        }
+        console.log(`\nExample script ${EXAMPLE_SCRIPT_NAME} finished.`);
+
     } catch (error) {
-        console.error("\nError running example getSchema script:", error);
         process.exit(1);
     }
 }
 
-runExampleGetSchema();
+runExampleFetchSchema();
