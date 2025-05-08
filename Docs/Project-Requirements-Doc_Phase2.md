@@ -16,7 +16,7 @@ Seth Docherty
 
 ## Introduction
 
-Phase 2 of the EAS Modular Playground project focuses on building real-world example workflows that demonstrate how the composable EAS modules (from Phase 1) can be used in geospatial business scenarios. These examples will showcase how to create, store, retrieve, and manage attestations that capture geospatial metadata, supporting a range of use cases such as impact monitoring, event check-ins, and geocaching.
+Phase 2 of the EAS Modular Playground project focuses on building real-world example workflows that demonstrate how the composable EAS modules (from Phase 1) can be used in geospatial business scenarios. These examples will showcase how to create, store, retrieve, and manage attestations that capture geospatial metadata, supporting a range of use cases such as impact monitoring, event check-ins, geocaching, and ProofMode content.
 
 ---
 
@@ -45,13 +45,14 @@ To provide a suite of practical, well-documented example workflows that illustra
 | FR1 | Provide example scripts for registering geospatial bounds as attestations | High | E.g., impact monitoring |
 | FR2 | Provide example scripts for event check-in with geo-IP and digital ticket | High | E.g., event attendance |
 | FR3 | Provide example scripts for geocaching activity with QR code and geospatial metadata | High |  |
-| FR4 | Enable creation of new EAS schemas tailored to each workflow | High |  |
-| FR5 | Validate attested data against the corresponding EAS schema before submission | High |  |
-| FR6 | Demonstrate on-chain and off-chain attestation creation and retrieval in examples | High |  |
-| FR7 | Demonstrate attestation revocation and explain scenarios for revocation | Medium |  |
-| FR8 | Ensure all example workflows are flexible and leverage composable, low-coupling modules | High |  |
-| FR9 | Provide clear, step-by-step documentation for each example, including expected inputs and outputs | High |  |
-| FR10 | Allow users to chain multiple EAS interactions in a single workflow example | High | E.g., schema creation → attestation |
+| FR4 | Provide example scripts for scavenger hunt activity with ProofMode content and metadata | High | E.g., scavenger hunt |
+| FR5 | Enable creation of new EAS schemas tailored to each workflow | High |  |
+| FR6 | Validate attested data against the corresponding EAS schema before submission | High |  |
+| FR7 | Demonstrate on-chain and off-chain attestation creation and retrieval in examples | High |  |
+| FR8 | Demonstrate attestation revocation and explain scenarios for revocation | Medium |  |
+| FR9 | Ensure all example workflows are flexible and leverage composable, low-coupling modules | High |  |
+| FR10 | Provide clear, step-by-step documentation for each example, including expected inputs and outputs | High |  |
+| FR11 | Allow users to chain multiple EAS interactions in a single workflow example | High | E.g., schema creation → attestation |
 
 ---
 
