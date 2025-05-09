@@ -1,4 +1,4 @@
-# Geotagging Attestation System: Detailed Workflow
+# Geotagging Attestation-based Verification System: Detailed Workflow
 
 This document outlines the detailed workflow for the Geotagging attestation system, which enables verifiable image integrity and geolocation attestation through blockchain.
 
