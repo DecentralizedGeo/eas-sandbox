@@ -4,97 +4,105 @@ This document outlines the detailed workflow for the Geotagging attestation syst
 
 ## Workflow Diagram
 
-```
-┌───────────────────────────────────────────────────────────────────────────────────────────┐
-│                                  Client Environment                                       │
-└───────────────────────────────────────┬───────────────────────────────────────────────────┘
-                                        │
-                                        ▼
-┌───────────────────────────────────────────────────────────────────────────────────────────┐
-│                           Geotagging Attestation Workflow                                 │
-│                                                                                           │
-│  ┌─────────────────────────────┐                                                          │
-│  │ 1. Schema Management        │                                                          │
-│  │                             │                                                          │
-│  │ ┌───────────┐ ┌───────────┐ │                                                          │
-│  │ │Check for  │ │Register   │ │                                                          │
-│  │ │Existing   ├─►New Schema │ │                                                          │
-│  │ │Schema     │ │if Needed  │ │                                                          │
-│  │ └───────────┘ └───────────┘ │                                                          │
-│  └──────────────┬──────────────┘                                                          │
-│                 │                                                                         │
-│                 ▼                                                                         │
-│  ┌─────────────────────────────┐                                                          │
-│  │ 2. Image Processing         │                                                          │
-│  │                             │                                                          │
-│  │ ┌───────────┐ ┌───────────┐ │  ┌───────────────────────────────┐                       │
-│  │ │Load/Take  │ │Extract    │ │  │      Metadata Extracted:      │                       │
-│  │ │Image      ├─►Metadata & │ │  │ • Geolocation (lat/long)      │                       │
-│  │ |           │ │Hash Image │ │  │ • Timestamp                   |                       |
-|  | |           | |           │    │      Hash Image:              |                       |
-│  │ └───────────┘ └───────────┘ │  │ • SHA-256 File Hash           │                       │
-│  └──────────────┬──────────────┘  └───────────────────────────────┘                       │
-│                 │                                                                         │
-│                 ▼                                                                         │
-│  ┌─────────────────────────────┐                                                          │
-│  │ 3. IPFS Storage (Simulated) │                                                          │
-│  │                             │                                                          │
-│  │ ┌───────────┐ ┌───────────┐ │  ┌───────────────────────────────┐                       │
-│  │ │Store Image│ │Generate   │ │  │    Content-Addressed Storage: │                       │
-│  │ │in Decen-  ├─►IPFS CID   │ │  │ • Immutable storage link      │                       │
-│  │ │tralized   │ │from Hash  │ │  │ • Content integrity built-in  │                       │
-│  │ │Storage    │ └───────────┘ │  │ • Distributed retrieval       │                       │
-│  │ └───────────┘               │  └───────────────────────────────┘                       │
-│  └──────────────┬──────────────┘                                                          │
-│                 │                                                                         │
-│                 ▼                                                                         │
-│  ┌─────────────────────────────┐                                                          │
-│  │ 4. Blockchain Attestation   │                                                          │
-│  │                             │                                                          │
-│  │ ┌───────────┐ ┌───────────┐ │  ┌───────────────────────────────┐                       │
-│  │ │Encode Data│ │Submit On- │ │  │  On-chain Attestation Data:   │                       │
-│  │ │According  ├─►Chain      │ │  │ • Geographic coordinates      │                       │
-│  │ │to Schema  │ │Transaction│ │  │ • Timestamp                   │                       │
-│  │ └───────────┘ └───────────┘ │  │ • File hash                   │                       │
-│  └──────────────┬──────────────┘  │ • IPFS CID                    │                       │
-│                 ▼                 └───────────────────────────────┘                       │
-│  ┌─────────────────────────────┐                                                          │
-│  │ 5. Independent Verification │                                                          │
-│  │                             │                                                          │
-│  │ ┌───────────┐ ┌───────────┐ │  ┌───────────────────────────────┐                       │
-│  │ │Retrieve   │ │Decode     │ │  │      Verification Steps:      │                       │
-│  │ │Attestation├─►Attestation│ │  │ 1. Fetch attestation from     │                       │
-│  │ │from Chain │ │Data       │ │  │    blockchain                 │                       │
-│  │ └───────────┘ └─────┬─────┘ │  │ 2. Retrieve image via IPFS    │                       │
-│  │                     │       │  │ 3. Extract file hash from     │                       │
-│  │ ┌───────────┐ ┌─────▼─────┐ │  │    attestation                │                       │
-│  │ │Fetch Image│ │Calculate  │ │  │ 4. Re-hash image              │                       │
-│  │ │from IPFS  ├─►New Hash & │ │  │ 5. Compare hashes             │                       │
-│  │ │using CID  | │Compare    │ │  │                               │                       │
-│  │ └───────────┘ └───────────┘ │  └───────────────────────────────┘                       │
-│  └─────────────────────────────┘                                                          │
-│                                                                                           │
-└───────────────────────────────────────────────────────────────────────────────────────────┘
-                │                                       │
-                ▼                                       ▼
-┌───────────────────────────────┐      ┌───────────────────────────────┐
-│        Ethereum Network       │      │         IPFS Network          │
-│                               │      │                               │
-│ ┌─────────────────────────┐   │      │ ┌─────────────────────────┐   │
-│ │      EAS Contract       │   │      │ │   Distributed Storage   │   │
-│ │                         │   │      │ │                         │   │
-│ │ ┌─────────────────────┐ │   │      │ │ ┌─────────────────────┐ │   │
-│ │ │  Schema Registry    │ │   │      │ │ │  Content-Addressed  │ │   │
-│ │ └─────────────────────┘ │   │      │ │ │     File Storage    │ │   │
-│ │                         │   │      │ │ └─────────────────────┘ │   │
-│ │ ┌─────────────────────┐ │   │      │ │                         │   │
-│ │ │    Attestations     │ │   │      │ │ ┌─────────────────────┐ │   │
-│ │ │                     │ │   │      │ │ │   Node-to-Node      │ │   │
-│ │ │ • Schema References │ │   │      │ │ │   File Transfer     │ │   │
-│ │ │ • Encoded Data      │ │   │      │ │ └─────────────────────┘ │   │
-│ │ └─────────────────────┘ │   │      │ └─────────────────────────┘   │
-│ └─────────────────────────┘   │      │                               │
-└───────────────────────────────┘      └───────────────────────────────┘
+```mermaid
+flowchart TD
+    subgraph ClientEnv["Client Environment"]
+        direction TB
+        TakePicture["Take Picture"]
+        GetAttestation["Retrieve Geotagging Attestation for Picture"]
+        GetVerification["Retrieve Verification for Geotagging Attestation"]
+        
+        TakePicture --> GetAttestation
+        GetAttestation --> GetVerification
+    end
+    
+    subgraph AttestSystem["Geotagging Attestation System"]
+        direction TB
+        
+        subgraph ImageProc["Image Processing"]
+            LoadImage["Load Image"]
+            ExtractData["Extract Metadata & Hash Image"]
+            MetadataInfo["Metadata Extracted:<br>- Geolocation (lat/long)<br>- Timestamp<br>- Hash Image: SHA-256 File Hash"]
+            LoadImage --> ExtractData
+        end
+        
+        subgraph Schema["Schema Management"]
+            CheckSchema["Check for Existing Schema"] 
+            RegisterSchema["Register New Schema if Needed"]
+            CheckSchema --> RegisterSchema
+        end
+        
+        subgraph IPFS["IPFS/Filecoin Storage"]
+            StoreImage["Store Image in Decentralized Storage"]
+            GenCID["Generate IPFS CID from Hash"]
+            StorageInfo["Content-Addressed Storage:<br>- Immutable storage link<br>- Content integrity built-in<br>- Distributed retrieval"]
+            StoreImage --> GenCID
+        end
+        
+        subgraph Blockchain["Blockchain Attestation"]
+            EncodeData["Encode Data According to Schema"]
+            SubmitTx["Submit On-Chain Transaction"] 
+            AttestData["On-chain Attestation Data:<br>- Geographic coordinates<br>- Timestamp<br>- File hash<br>- IPFS CID"]
+            EncodeData --> SubmitTx
+        end
+        
+        ImageProc --> Schema
+        Schema --> IPFS
+        IPFS --> Blockchain
+    end
+    
+    subgraph VerifierEnv["Verifier Environment"]
+        direction TB
+        RetrieveAtt["Retrieve Attestation from Chain"]
+        DecodeAtt["Decode Attestation Data"]
+        FetchImg["Fetch Image from IPFS using CID"]
+        CalcHash["Calculate New Hash & Compare"]
+        VerifySteps["Verification Steps:<br>1. Fetch attestation from blockchain<br>2. Retrieve image via IPFS<br>3. Extract file hash from attestation<br>4. Re-hash image<br>5. Compare hashes"]
+        
+        RetrieveAtt --> DecodeAtt
+        DecodeAtt --> FetchImg
+        FetchImg --> CalcHash
+    end
+    
+    subgraph EthNetwork["Ethereum Network"]
+        EASContract["EAS Contract"]
+        SchemaRegistry["Schema Registry"]
+        Attestations["Attestations<br>- Schema References<br>- Encoded Data"]
+        
+        EASContract --- SchemaRegistry
+        EASContract --- Attestations
+    end
+    
+    subgraph IPFSNetwork["IPFS/Filecoin Network"]
+        StorageSystem["Distributed Storage"]
+        ContentAddressing["Content-Addressed File Storage"]
+        NodeTransfer["Node-to-Node File Transfer"]
+        
+        StorageSystem --- ContentAddressing
+        StorageSystem --- NodeTransfer
+    end
+    
+    GetAttestation -.-> AttestSystem
+    GetVerification -.-> VerifierEnv
+    
+    Blockchain -.-> EthNetwork
+    IPFS -.-> IPFSNetwork
+    RetrieveAtt -.-> EthNetwork
+    FetchImg -.-> IPFSNetwork
+    
+    classDef clientEnv fill:#e1f5fe,stroke:#01579b,stroke-width:2px
+    classDef attestSystem fill:#e8f5e9,stroke:#2e7d32,stroke-width:2px
+    classDef verifierEnv fill:#fff3e0,stroke:#e65100,stroke-width:2px
+    classDef network fill:#f3e5f5,stroke:#6a1b9a,stroke-width:2px
+    classDef infoBox fill:#ffffe0,stroke:#333,stroke-width:1px,stroke-dasharray: 5 5
+    classDef section fill:#f9f9f9,stroke:#333,stroke-width:1px
+    
+    class ClientEnv clientEnv
+    class AttestSystem attestSystem
+    class VerifierEnv verifierEnv
+    class EthNetwork,IPFSNetwork network
+    class MetadataInfo,StorageInfo,AttestData,VerifySteps infoBox
+    class Schema,IPFS,Blockchain,ImageProc section
 ```
 
 ## Technical Implementation Details
