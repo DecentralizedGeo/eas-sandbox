@@ -10,7 +10,7 @@ flowchart TD
         direction TB
         TakePicture["Take Picture"]
         GetAttestation["Retrieve Geotagging Attestation for Picture"]
-        GetVerification["Retrieve Verification for Geotagging Attestation"]
+        GetVerification["Retrieve Geotagging Verification Certificate for Geotagging Attestation"]
         
         TakePicture --> GetAttestation
         GetAttestation --> GetVerification
@@ -104,6 +104,7 @@ flowchart TD
     class MetadataInfo,StorageInfo,AttestData,VerifySteps infoBox
     class Schema,IPFS,Blockchain,ImageProc section
 ```
+
 
 ## Technical Implementation Details
 
