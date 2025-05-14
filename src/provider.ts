@@ -1,10 +1,12 @@
 import { ethers } from "ethers";
 import * as dotenv from "dotenv";
 
-dotenv.config();
+if (typeof window === 'undefined') {
+    dotenv.config();
+}
 
-const privateKey = process.env.PRIVATE_KEY;
-const infuraApiKey = process.env.INFURA_API_KEY;
+const privateKey = process.env.VITE_PRIVATE_KEY || process.env.PRIVATE_KEY;
+const infuraApiKey = process.env.VITE_PRIVATE_KEY || process.env.INFURA_API_KEY;
 
 // Moved the check for infuraApiKey here as it's needed for the URL
 if (!infuraApiKey) {
