@@ -77,7 +77,7 @@ function App() {
             { name: "id", value: (Math.random() * 1000).toString(), type: "string" },
             { name: "timestamp", value: time.toISOString(), type: "string" },
             { name: "location", value: scaledLocation, type: "uint40[]" },
-            { name: "locationType", value: "latitude, longitude tuple (scaled by 1,000,000)", type: "string" }
+            { name: "locationType", value: "scaledCoordinates", type: "string" }
           ],
         };
 
