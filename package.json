@@ -1,11 +1,13 @@
 {
     "name": "eas-attestation-tutorial",
+    "private": true,
+    "workspaces": [
+        "qr-poc"
+    ],
     "version": "1.0.0",
     "description": "TypeScript project for EAS attestation tutorial",
     "main": "dist/attest.js",
     "scripts": {
-        "build": "tsc",
-        "start": "ts-node src/attest.ts",
         "test": "echo \"Error: no test specified\" && exit 1",
         "example:attest-onchain": "ts-node src/examples/create-onchain-attestation.ts",
         "example:attest-offchain": "ts-node src/examples/create-offchain-attestation.ts",
