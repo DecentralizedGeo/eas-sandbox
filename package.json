@@ -38,16 +38,18 @@
     "license": "ISC",
     "dependencies": {
         "@ethereum-attestation-service/eas-sdk": "^2.7.0",
+        "@types/adm-zip": "^0.5.7",
         "@types/crypto-js": "^4.2.2",
+        "@types/js-yaml": "^4.0.9",
+        "adm-zip": "^0.5.16",
         "crypto-js": "^4.2.0",
         "dotenv": "^16.4.5",
         "ethers": "^6",
         "geoip-lite": "^1.4.10",
         "jimp": "^1.6.0",
+        "js-yaml": "^4.1.0",
         "jsqr": "^1.4.0",
-        "public-ip": "^7.0.1",
-        "@types/js-yaml": "^4.0.9",
-        "js-yaml": "^4.1.0"
+        "public-ip": "^7.0.1"
     },
     "devDependencies": {
         "@types/geoip-lite": "^1.4.4",
