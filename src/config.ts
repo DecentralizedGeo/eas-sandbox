@@ -6,4 +6,5 @@ export const PRIVATE_DATA_SCHEMA_STRING = "bytes32 privateData"; // Schema strin
 // Add other non-sensitive configuration constants here as needed
 export const SEPOLIA_CHAIN_ID = '0xC2679fBD37d54388Ce493F1DB75320D236e1815e'
 export const SCHEMA_UID = "0x5894dbce58b99f80288b8a9e06bc4763d2df445b4c9e9f6ff302ab66aabec0fe"
+export const ENCRYPTION_KEY = "hello"
 

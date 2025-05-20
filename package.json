@@ -2,7 +2,8 @@
     "name": "eas-attestation-tutorial",
     "private": true,
     "workspaces": [
-        "qr-poc"
+        "qr-poc",
+        "validator"
     ],
     "version": "1.0.0",
     "description": "TypeScript project for EAS attestation tutorial",

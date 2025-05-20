@@ -1,18 +1,14 @@
 import { ethers } from 'ethers';
 import { EAS, SchemaEncoder, SchemaRegistry } from '@ethereum-attestation-service/eas-sdk';
-import { EASContractAddress, EASSchemaRegistryAddress, SCHEMA_UID } from '../src/config';
+import { EASContractAddress, EASSchemaRegistryAddress, SCHEMA_UID, ENCRYPTION_KEY } from '../src/config';
 import { getAttestation } from '../src/eas-attestation'
 import CryptoJS from "crypto-js";
 
-// constants
-const schemaUID = SCHEMA_UID;
-const SECRET = "hello";
-
 async function main() {
-  console.log(`Starting attestation monitor for schema: ${schemaUID}`);
+  console.log(`Starting attestation monitor for schema: ${SCHEMA_UID}`);
   
   // Connect to Sepolia network
-  const provider = new ethers.JsonRpcProvider('https://sepolia.infura.io/v3/4c5626750cf84a7ead5a8efa84311307');
+  const provider = new ethers.JsonRpcProvider(`https://sepolia.infura.io/v3/${process.env.INFURA_API_KEY}`);
   
   // Initialize EAS SDK
   const eas = new EAS(EASContractAddress);
@@ -27,7 +23,7 @@ async function main() {
   const schemaEncoder = new SchemaEncoder(schemaDefinition);
 
   // Setup attestation event listener
-  const filter = eas.contract.filters.Attested(undefined, undefined, undefined, schemaUID);
+  const filter = eas.contract.filters.Attested(undefined, undefined, undefined, SCHEMA_UID);
 
   console.log("Monitoring for new attestations...");
 
@@ -50,7 +46,7 @@ async function main() {
         const encryptedBytes = ethers.getBytes(encryptedData);
         const base64String = new TextDecoder().decode(Uint8Array.from(encryptedBytes));
 
-        const decryptedData = CryptoJS.AES.decrypt(base64String, SECRET).toString(CryptoJS.enc.Utf8);
+        const decryptedData = CryptoJS.AES.decrypt(base64String, ENCRYPTION_KEY).toString(CryptoJS.enc.Utf8);
         console.log("Decrypted payload:", decryptedData);
       } else {
         console.log("No attestation data found.");
