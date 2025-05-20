@@ -298,3 +298,26 @@ Run the following in a terminal located at the root directory of this repository
 ```
 $ npm run build --workspace=qr-poc
 ```
+
+## ProofMode Proof of Concept
+
+Under the `src/workflows` directory, you'll find `workflow-proofmode.ts`, which demonstrates a practical implementation of media verification attestations using EAS. This workflow emulates how ProofMode (a mobile app for capturing verifiable photos) data can be attested on-chain, preserving the integrity and origin of digital evidence.
+
+The workflow performs the following steps:
+1. Registers a schema designed for ProofMode metadata if not already registered
+2. Locates and extracts a ProofMode zip file containing a media file with verification metadata
+3. Processes the image and its associated proof.json file to extract geolocation data, timestamps, and other verification details
+4. Creates an on-chain attestation with the extracted metadata
+5. The attestation provides a tamper-evident, blockchain-backed verification of when and where the media was captured
+
+This proof of concept is particularly valuable for applications requiring verified media evidence, such as journalism, human rights documentation, legal evidence collection, and scientific field research where the authenticity and provenance of media are critical.
+
+**To run this workflow**
+
+First, place your ProofMode zip file (format: `Test_PM-*.zip`) containing an image and its proof.json file in the `src/workflows` directory.
+
+Then, run the following command from the root directory of this repository:
+
+```
+$ yarn workflow:proofmode
+```
