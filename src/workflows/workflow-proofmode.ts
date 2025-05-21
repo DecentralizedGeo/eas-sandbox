@@ -2,49 +2,57 @@ import { ethers, Signer } from "ethers";
 import * as CryptoJS from 'crypto-js';
 import * as fs from 'fs';
 import * as path from 'path';
+import AdmZip from 'adm-zip';
 import { getProviderSigner } from "../provider";
 import { checkExistingSchema, fetchSchema, SchemaRegistrationData, registerSchema } from "../eas-schema"; // Assuming a utility function
 import { createOnChainAttestation, OnChainAttestationData, getAttestation } from "../eas-attestation";
-import { SchemaEncoder } from "@ethereum-attestation-service/eas-sdk";
 
 // --- Workflow Configuration ---
 const WORKFLOW_CONFIG = {
     // Define the schema for ProofMode content upload
     schemaName: "ProofModeContentUpload",
     schemaUID: "", // Leave blank to register, or fill in if already registered
-    schemaString: "string latitude, string longitude, uint64 timestamp, string fileHash, string ipfsCid",
+    schemaString: "string location, string locationType, uint64 timestamp, string notes, string media",
     resolverAddress: ethers.ZeroAddress, //EASSchemaRegistryAddress // Optional: Use a resolver if needed
     revocable: true, // Check-ins are typically not revocable
 };
 // ---------------------------
 
-/**
- * Creates a SHA256 hash of a string using crypto-js
- * @param text - Text (for demonstration purposes) to hash
- * @returns Hexadecimal string representation of the hash
- */
-function sha256(text: string): string {
-    return CryptoJS.SHA256(text).toString(CryptoJS.enc.Hex);
+// Extracts zip file
+function extractZipFile(zipFilePath: string, destDir: string): string {
+    console.log(`\nExtracting zip file: ${zipFilePath}`);
+    
+    try {
+        // Create the destination directory if it doesn't exist
+        if (!fs.existsSync(destDir)) {
+            fs.mkdirSync(destDir, { recursive: true });
+        }
+        
+        // Extract the zip file
+        const zip = new AdmZip(zipFilePath);
+        zip.extractAllTo(destDir, true);
+        
+        console.log(`Zip file extracted successfully to: ${destDir}`);
+        return destDir;
+    } catch (error) {
+        console.error(`Error extracting zip file: ${error}`);
+        throw new Error(`Failed to extract zip file: ${error}`);
+    }
 }
 
 /**
- * Simulates ProofMode content upload and extracting metadata.
- * Processes a ProofMode image file and extracts/simulates its metadata.
- * 
- * @param {string} imagePath - Path to the image file
- * @returns {object} The image data and its metadata
+ * Extracts ProofMode metadata from proof.json file.
+ * Processes a ProofMode image file and extracts actual metadata from the corresponding proof.json file.
  */
 function simulateProofModeUpload(imagePath: string): { 
     imageData: Buffer;
-    latitude: string; 
-    longitude: string; 
+    location: string; 
+    locationType: string;
     timestamp: number;
-    fileHash: string;
+    notes: string;
+    media: string;
 } {
-    // Simulate the process of uploading a photo with ProofMode and extracting metadata such as latitude, longitude, timestamp, and file hash
-    // In a real implementation, this would be done by the ProofMode app. Here we just read the file and simulate the metadata extraction
-    // For demonstration, we will use a sample image file
-    console.log("\n--- Simulating ProofMode Upload ---");
+    console.log("\n--- Processing ProofMode Data ---");
     
     if (!fs.existsSync(imagePath)) {
         throw new Error(`Image file not found at path: ${imagePath}`);
@@ -56,27 +64,52 @@ function simulateProofModeUpload(imagePath: string): {
         // Read the image file
         const imageData = fs.readFileSync(imagePath);
         
-        // In a real ProofMode implementation, the metadata would be extracted from the image EXIF data
-        // Here we simulate the metadata that would be provided by ProofMode
+        // Derive the path to the proof.json file based on the image path
+        const imageDir = path.dirname(imagePath);
+        
+        // List all files in the directory to find the proof.json file
+        const files = fs.readdirSync(imageDir);
+        const proofJsonFile = files.find(file => file.endsWith('.proof.json'));
+        
+        if (!proofJsonFile) {
+            throw new Error('No proof.json file found in the directory');
+        }
+        
+        const proofJsonPath = path.join(imageDir, proofJsonFile);
+        console.log(`Found proof JSON file: ${proofJsonPath}`);
+        
+        // Read and parse the proof.json file
+        const proofData = JSON.parse(fs.readFileSync(proofJsonPath, 'utf8'));
+        
+        // Extract only the required fields: Location.Latitude, Location.Longitude, and Location.Time
+        const latitude = proofData["Location.Latitude"];
+        const longitude = proofData["Location.Longitude"];
+        const timeSeconds = parseFloat(proofData["Location.Time"]);
+        
+        // Format the location as "latitude,longitude"
+        const coordinates = `${latitude},${longitude}`;
+        
         const data = {
             imageData: imageData,
-            latitude: "40.7128", // Example coordinates (New York City)
-            longitude: "-74.0060",
-            timestamp: Math.floor(Date.now() / 1000),
-            fileHash: sha256(imageData.toString('hex')), // Hash of the file contents
+            location: coordinates,
+            locationType: "coordinates",
+            timestamp: Math.floor(timeSeconds),
+            notes: "",
+            media: "",
         };
         
         console.log("ProofMode Data:", {
-            latitude: data.latitude,
-            longitude: data.longitude,
+            location: data.location,
+            locationType: data.locationType,
             timestamp: data.timestamp,
-            fileHash: data.fileHash,
+            notes: data.notes,
+            media: data.media ? data.media : "(none)"
         });
         
         return data;
     } catch (error) {
-        console.error(`Error processing image: ${error}`);
-        throw new Error(`Failed to process image: ${error}`);
+        console.error(`Error processing ProofMode data: ${error}`);
+        throw new Error(`Failed to process ProofMode data: ${error}`);
     }
 }
 
@@ -122,10 +155,8 @@ async function ensureSchemaRegistered(signer: ethers.Signer): Promise<string> {
  * Runs the full ProofMode workflow:
  * 1. Ensures the ProofMode schema is registered.
  * 2. Simulates uploading the image and extracting metadata.
- * 3. Simulates storing the image on IPFS.
- * 4. Creates an on-chain attestation for the image with metadata and IPFS CID.
- * 5. Simulates the verification of the attestation by a third-party verifier.
- * 6. Finalizes the workflow.
+ * 3. Creates an on-chain attestation for the image with metadata.
+ * 4. Finalizes the workflow.
  */
 export async function runProofModeWorkflow(): Promise<void> {
     console.log("\n--- Starting ProofMode Workflow ---");
@@ -141,30 +172,38 @@ export async function runProofModeWorkflow(): Promise<void> {
 
         console.log(`Using Schema UID: ${schemaUID}`);
 
-        // 2. Simulate taking a photo with ProofMode and extracting its metadata
-        console.log("\nStep 2: Simulating taking a photo with ProofMode and extracting its metadata...");
-        // For demonstration, we will use a sample image file
-        const sampleImagePath = path.join(__dirname, '../../sample-data/sample-image.jpg');
+        // 2. Find and extract the ProofMode zip file
+        console.log("\nStep 2: Finding and extracting the ProofMode zip file...");
+        const zipFile = fs.readdirSync(__dirname).find(file => file.startsWith('Test_PM-') && file.endsWith('.zip'));
         
-        // Create a sample image file if it doesn't exist
-        if (!fs.existsSync(path.dirname(sampleImagePath))) {
-            fs.mkdirSync(path.dirname(sampleImagePath), { recursive: true });
+        if (!zipFile) {
+            throw new Error('No ProofMode zip file found. Please ensure a Test_PM-*.zip file is available.');
         }
         
-        if (!fs.existsSync(sampleImagePath)) {
-            // Creating a simple empty image file for demo purposes
-            const sampleBuffer = Buffer.from('Sample image', 'utf8');
-            fs.writeFileSync(sampleImagePath, sampleBuffer);
-            console.log(`Created a sample image file at: ${sampleImagePath}`);
-        }
+        const zipFilePath = path.join(__dirname, zipFile);
+        console.log(`Found ProofMode zip file: ${zipFilePath}`);
         
-        const proofModeData = simulateProofModeUpload(sampleImagePath);
+        // Create a directory to extract the zip file to (use the same name as the zip file without the .zip extension)
+        const extractDir = path.join(__dirname, zipFile.replace('.zip', ''));
+        
+        // Extract the zip file
+        extractZipFile(zipFilePath, extractDir);
+        
+        // 3. Process an image with ProofMode added metadata
+        console.log("\nStep 3: Processing an image with ProofMode added metadata...");
 
+        // Find the JPG file in the directory
+        const files = fs.readdirSync(extractDir);
+        const imageFile = files.find(file => file.endsWith('.JPG') || file.endsWith('.jpg'));
         
-        // 3. Simulate storing the image on IPFS (in a real app) and getting the IPFS CID
-        console.log("\nStep 3: Simulating storing the image on IPFS and getting the CID...");
-        const mockIpfsCid = "ipfs://Qm" + proofModeData.fileHash.substring(0, 44);
-        console.log(`Simulated IPFS CID: ${mockIpfsCid}`);
+        if (!imageFile) {
+            throw new Error('No image file found in the extracted ProofMode directory');
+        }
+        
+        const imagePath = path.join(extractDir, imageFile);
+        console.log(`Found ProofMode image: ${imagePath}`);
+        
+        const proofModeData = simulateProofModeUpload(imagePath);
 
         // 4. Prepare and Create On-Chain Attestation
         console.log("\nStep 4: Preparing and Creating On-Chain Attestation...");
@@ -176,11 +215,11 @@ export async function runProofModeWorkflow(): Promise<void> {
             schemaUID: schemaUID,
             schemaString: WORKFLOW_CONFIG.schemaString,
             dataToEncode: [
-                { name: "latitude", value: proofModeData.latitude, type: "string" },
-                { name: "longitude", value: proofModeData.longitude, type: "string" },
+                { name: "location", value: proofModeData.location, type: "string" },
+                { name: "locationType", value: proofModeData.locationType, type: "string" },
                 { name: "timestamp", value: BigInt(proofModeData.timestamp), type: "uint64" },
-                { name: "fileHash", value: proofModeData.fileHash, type: "string" },
-                { name: "ipfsCid", value: mockIpfsCid, type: "string" },
+                { name: "notes", value: proofModeData.notes, type: "string" },
+                { name: "media", value: proofModeData.media, type: "string" },
             ],
         };
 
@@ -188,63 +227,9 @@ export async function runProofModeWorkflow(): Promise<void> {
 
         const newAttestationUID = await createOnChainAttestation(signer, attestationData);
         console.log(`\nOn-chain ProofMode attestation created successfully! UID: ${newAttestationUID}`);
-
-        // 5. Simulate the verification of the attestation by a third-party verifier
-        console.log("\nStep 5: Simulating the verification of the attestation by a third-party verifier...");
-
-        // First, the verifier retrieves the attestion from the blockchain using the UID
-        console.log(`Verifier is retrieving the attestation with UID: ${newAttestationUID} from the blockchain...`);
-        const fetchedAttestation = await getAttestation(newAttestationUID);
-
-        if (!fetchedAttestation) {
-            console.error("Failed to retrieve the attestation from the blockchain. Verification cannot proceed.");
-            return;
-        }
-
-        console.log("Attestation retrieved successfully!");
-
-        // Then, the verifier would decode the attestation data...
-        console.log("Verifier is decoding the attestation data to extract the fileHash...");
-        const schemaEncoder = new SchemaEncoder(WORKFLOW_CONFIG.schemaString);
-        const decodedData = schemaEncoder.decodeData(fetchedAttestation.data);
-        console.log("Decoded Data:", decodedData);
         
-        // ... and extract the fileHash
-        let attestedFileHash = "";
-        for (const field of decodedData) {
-            if (field.name === "fileHash") {
-                attestedFileHash = field.value.value as string;
-                break;
-            }
-        }
-        
-        if (!attestedFileHash) {
-            console.error("Could not extract fileHash from the attestation. Verification cannot proceed.");
-            return;
-        }
-
-        console.log(`Extracted fileHash from attestation: ${attestedFileHash}`);
-        
-        // Then, the verifier would retrieve the image file using the IPFS CID and calculating its hash
-        // Here we simulate this process by reading the local file
-        console.log("Simulating the verifier retrieving the image file from IPFS...");
-        const retrievedIpfsImageData = fs.readFileSync(sampleImagePath);
-        const verifierCalculatedHash = sha256(retrievedIpfsImageData.toString('hex'));
-        
-        console.log(`Hash from blockchain attestation: ${attestedFileHash}`);
-        console.log(`Hash calculated by verifier: ${verifierCalculatedHash}`);
-        
-        // Compare the hashes
-        const isVerified = attestedFileHash === verifierCalculatedHash;
-        
-        if (isVerified) {
-            console.log("\nVerification successful! The image has not been tampered with.");
-        } else {
-            console.log("\nVerification failed! The image may have been modified since attestation.");
-        }
-        
-        // 6. Finalize the workflow
-        console.log("\nStep 6: Finalizing the workflow...");
+        // 5. Finalize the workflow
+        console.log("\nStep 5: Finalizing the workflow...");
         
         // In a real implementation, this would involve notifying the user or updating the UI
         // Here we just log the success message
