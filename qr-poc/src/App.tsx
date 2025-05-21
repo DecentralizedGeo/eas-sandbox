@@ -1,5 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { useState, useEffect } from 'react';
+import CryptoJS from 'crypto-js';
 import { ethers } from 'ethers';
 import { NO_EXPIRATION } from "@ethereum-attestation-service/eas-sdk";
 import './App.css';
@@ -66,18 +67,34 @@ function App() {
         // Prepare attestation data
         const time = new Date();
 
+        // Get the secret URL param
+        const urlParams = new URLSearchParams(window.location.search);
+        const secret = urlParams.get('secret');
+
+        // Encode the public key with the secret
+        const recipePayload = CryptoJS.AES.encrypt(
+          JSON.stringify({ publicKey: currentSigner.address }),
+          secret || "default"
+        ).toString();
+        const bytesPayload = ethers.toUtf8Bytes(recipePayload);
+
         // Create attestation data object following the OnChainAttestationData interface
         const attestationData: OnChainAttestationData = {
           recipient: currentSigner.address,
           expirationTime: NO_EXPIRATION,
           revocable: true,
           schemaUID: SCHEMA_UID,
-          schemaString: "string id,string timestamp,uint40[] location,string locationType",
+          schemaString: "uint40 eventTimestamp,string srs,string locationType,uint40[] location,string recipeType,bytes[] recipePayload,string[] mediaType,string[] mediaData,string memo",
           dataToEncode: [
-            { name: "id", value: (Math.random() * 1000).toString(), type: "string" },
-            { name: "timestamp", value: time.toISOString(), type: "string" },
+            { name: "eventTimestamp", value: Math.floor(time.getTime() / 1000).toString(), type: "uint40" },
+            { name: "srs", value: "EPSG:4326", type: "string" },
+            { name: "locationType", value: "scaledCoordinates", type: "string" },
             { name: "location", value: scaledLocation, type: "uint40[]" },
-            { name: "locationType", value: "scaledCoordinates", type: "string" }
+            { name: "recipeType", value: "qrCode", type: "string" },
+            { name: "recipePayload", value: [bytesPayload], type: "bytes[]" },
+            { name: "mediaType", value: [], type: "string[]" },
+            { name: "mediaData", value: [], type: "string[]" },
+            { name: "memo", value: `QR Code proof of concept!`, type: "string" },
           ],
         };
 
