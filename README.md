@@ -20,6 +20,9 @@ We've also built a set of configurable example scripts that demonstrate various 
   - [Using the Configuration Manifest](#using-the-configuration-manifest)
   - [Running sample examples](#running-sample-examples)
   - [Running workflow examples](#running-workflow-examples)
+  - [QR Code Proof of Concept](#qr-code-proof-of-concept)
+    - [Running with Validation](#running-with-validation)
+  - [ProofMode Proof of Concept](#proofmode-proof-of-concept)
 
 ## RPC Provider API key (e.g., Infura, Alchemy)
 
