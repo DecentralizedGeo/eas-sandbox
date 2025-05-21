@@ -296,7 +296,7 @@ $ yarn workspace qr-poc dev
 Run the following in a terminal located at the root directory of this repository
 
 ```
-$ npm run build --workspace=qr-poc
+$ yarn run build:qr-poc
 ```
 
 ### Running with Validation
