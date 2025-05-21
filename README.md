@@ -288,7 +288,7 @@ Under the `qr-poc` directory of this repository lives a React project bootstrapp
 Run the following in a terminal located at the root directory of this repository
 
 ```
-$ yarn workspace qr-poc dev 
+$ yarn run dev:qr-poc
 ```
 
 **To build**
@@ -304,7 +304,7 @@ $ yarn run build:qr-poc
 Adjacent to the `qr-poc` folder exists a `validator` workspace. This poses as a proof of concept off-chain validator that monitors a specific Sepolia attestation SchemaUID, decrypting the `recipePayload` attribute. Although running this is **not** required, it can be tested with the QR code single page application (SPA). To properly run it, update the `src/config.ts` file's `ENCRYPTION_KEY` and `SCHEMA_UID` values. Then, in a terminal run:
 
 ```
-$ yarn workspace validator dev
+$ yarn run dev:validator
 ```
 
 Then, with the QR code SPA running, navigate to the development server URL and add the `secret` parameter equal to the `ENCRYPTION_KEY` value. For example, if my `ENCRYPTION_KEY` is `hello`, the URL I should navigate to is `http://localhost:5173/?secret=hello` assuming my development server is on `http://localhost:5173/`
