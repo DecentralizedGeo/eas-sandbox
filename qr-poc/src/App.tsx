@@ -5,8 +5,8 @@ import { NO_EXPIRATION } from "@ethereum-attestation-service/eas-sdk";
 import './App.css';
 
 // Import helpers
-import { SCHEMA_UID } from './lib/config';
-import { createOnChainAttestation, OnChainAttestationData } from './lib/eas-attestation';
+import { SCHEMA_UID } from '../../src/config';
+import { createOnChainAttestation, OnChainAttestationData } from '../../src/eas-attestation';
 
 declare global {
   interface Window {
@@ -14,7 +14,8 @@ declare global {
   }
 }
 
-const MOCK_QR_DATA = '[28.3772, 81.5707]'
+const MOCK_QR_DATA = [28.3772, 81.5707]
+const scaledLocation = MOCK_QR_DATA.map(coord => Math.round(coord * 1000000));
 
 function App() {
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
@@ -64,7 +65,6 @@ function App() {
 
         // Prepare attestation data
         const time = new Date();
-        const qrDataParsed = JSON.parse(MOCK_QR_DATA);
 
         // Create attestation data object following the OnChainAttestationData interface
         const attestationData: OnChainAttestationData = {
@@ -72,13 +72,13 @@ function App() {
           expirationTime: NO_EXPIRATION,
           revocable: true,
           schemaUID: SCHEMA_UID,
-          schemaString: "string lat, string long, string id, string timestamp",
+          schemaString: "string id,string timestamp,uint40[] location,string locationType",
           dataToEncode: [
-            { name: "lat", value: qrDataParsed[0].toString(), type: "string" },
-            { name: "long", value: qrDataParsed[1].toString(), type: "string" },
             { name: "id", value: (Math.random() * 1000).toString(), type: "string" },
-            { name: "timestamp", value: time.toISOString(), type: "string" }
-          ]
+            { name: "timestamp", value: time.toISOString(), type: "string" },
+            { name: "location", value: scaledLocation, type: "uint40[]" },
+            { name: "locationType", value: "scaledCoordinates", type: "string" }
+          ],
         };
 
         const newAttestationUID = await createOnChainAttestation(currentSigner, attestationData);

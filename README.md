@@ -30,7 +30,6 @@ Some of the tooling built will require n [Remote Procedure Call](https://www.cyf
 By default, all transactions have been configured for the Ethereum Sepolia test network.
 
 - If you would like to review your attestations, please visit the [EAS Sepolia Explorer](https://sepolia.easscan.io/). You can search for your wallet address in the search bar to see all the attestations made by your wallet.
-
 - If you would like to review your transactions, please visit the [Etherscan Sepolia Testnet Explorer](https://sepolia.etherscan.io/). You can search for your wallet address in the search bar to see all the transactions made by your wallet.
 
 ## Getting Started
@@ -80,7 +79,7 @@ At the minimum, you will need to set the following environment variables:
 - `PRIVATE_KEY`: The private key of your wallet. This is used to sign transactions and attestations. **Keep this secret!**
 - `INFURA_API_KEY`: The API key for your RPC provider (e.g., Infura, Alchemy). This is used to connect to the Ethereum network.
 
-> NOTE: Ensure your wallet has some test ether from the Ethereum Sepolia test network. You can use a faucet to get some test ether. I recommend using [Google's Faucet](https://cloud.google.com/application/web3/faucet/ethereum/sepolia) to get some test ether.
+> NOTE: Ensure your wallet has some test ether from the Ethereum Sepolia test network. You can use a faucet to get some test ether. I recommend using [Google&#39;s Faucet](https://cloud.google.com/application/web3/faucet/ethereum/sepolia) to get some test ether.
 
 ## Using the Configuration Manifest
 
@@ -182,72 +181,75 @@ A suite of sample examples are provided in the `examples` directory. These examp
 The following scripts in `src/examples/` demonstrate common EAS interactions:
 
 - **`register-schema.ts`**:
+
   - Demonstrates how to register a new schema on the EAS Schema Registry.
   - Run with: `yarn example:register-schema`
   - **Note:** Configure the `register-schema` section in `config/examples.yaml`. Minimally, provide `schemaString`.
-
 - **`fetch-schema.ts`**:
+
   - Shows how to fetch the details of an existing schema using its UID.
   - Run with: `yarn example:fetch-schema`
   - **Note:** Configure the `fetch-schema` section in `config/examples.yaml`. Minimally, provide `schemaUid`.
-
 - **`create-onchain-attestation.ts`**:
+
   - Creates a new attestation on-chain using a specific schema.
   - Run with: `yarn example:attest-onchain`
   - **Note:** Configure the `attest-onchain` section in `config/examples.yaml`. Minimally, provide `schemaUid` and `fields`.
-
 - **`get-attestation.ts`**:
+
   - Fetches the details of an existing on-chain attestation using its UID.
   - Run with: `yarn example:fetch-attestation`
   - **Note:** Configure the `fetch-attestation` section in `config/examples.yaml`. Minimally, provide `attestationUid`.
-
 - **`revoke-attestation.ts`**:
+
   - Revokes an existing on-chain attestation.
   - Run with: `yarn example:revoke`
   - **Note:** Configure the `revoke-attestation` section in `config/examples.yaml`. Minimally, provide `attestationUid`.
-
 - **`create-offchain-attestation.ts`**:
+
   - Creates and signs an off-chain attestation. The result is printed to the console but not stored automatically by this script.
   - Run with: `yarn example:attest-offchain`
   - **Note:** Configure the `attest-offchain` section in `config/examples.yaml`. Minimally, provide `schemaUid` and `fields`.
-
 - **`save-offchain-attestation.ts`**:
+
   - Creates a new signed off-chain attestation and then saves it to the local `offchain-attestations.json` file.
   - Run with: `yarn example:save-offchain`
   - **Note:** Configure the `save-offchain-attestation` section in `config/examples.yaml`. Minimally, provide `schemaUid` and `fields`. The script will create/append to `offchain-attestations.json`.
-
 - **`load-offchain-attestations.ts`**:
+
   - Loads attestations from the `offchain-attestations.json` file.
   - Run with: `yarn example:load-offchain`
   - **Note:** This script primarily loads data from `offchain-attestations.json`. Configuration in `examples.yaml` under `load-offchain-attestations` might be used for optional filtering parameters if implemented in the script. See configuration section for more details.
-
 - **`chained-attestation.ts`**:
+
   - Demonstrates how to create a new attestation that references a previous attestation.
   - Run with: `yarn example:chained-attestation`
   - **Note:** Configure the `chained-attestation` section in `config/examples.yaml`. Minimally, provide `schemaUid`, `fields`, and `referenceUid`.
-
 - **`gas-comparison.ts`**:
+
   - Compares the gas costs of storing geojson objects on chain as `strings` and `int40` coordinates pairs. More details on the significance of optimized schemas can be found in the [EAS documentation](https://docs.attest.org/docs/tutorials/gas-efficiency) while the specifics of storing geometry data on-chain can be found [here](/Docs/optimzing-geometry-data-on-chain.md).
   - Run with: `yarn example:gas-cost-comparison`
   - **Note:** Configure the `gas-cost-comparison` section in `config/examples.yaml`. To simulate the cost of attesting geojson objects, add a valid geojson object to the `coordinates` key.
-
 - **`list-items.ts`**:
+
   - Lists attestations or schemas for a given wallet address and referenced attestations.
   - Run with: `yarn example:list-items`
   - **Note:** Configure the `list-items` section in `config/examples.yaml`. To query attestations and schemas from a given `walletAddress`, add the `walletAddress` value to the `recipient` property. Update the `referenceUid` property To view referenced attestations from a given `UID`.
-  > The query limit default is set to 10.  If necessary, modify the `queryLimit` variable in the script.
 
+  > The query limit default is set to 10.  If necessary, modify the `queryLimit` variable in the script.
+  >
 - **`prepare-private-data.ts`**:
+
   - Shows how to prepare private data for an attestation using the EAS SDK's PrivateData class.
   - Run with: `yarn example:create-private-data-object`
   - **Note:** Configure the `create-private-data-object` section in `config/examples.yaml`. Minimally, provide `schemaUid`, `schemaString`, and `fields`.
-
 - **`private-data-proofs.ts`**:
+
   - Demonstrates creating and verifying proofs for private data attestations.
   - Run with: `yarn example:generate-private-data-proofs`
   - **Note:** Configure the `generate-private-data-proofs` section in `config/examples.yaml`. Minimally, provide `schemaUid`, `fields`, and `fieldsToDisclose`.
-
 - **`private-data-proofs-onchain.ts`**:
+
   - Demonstrates creating and verifying proofs for private data attestations that are stored on-chain. The resulting proof can be used to verify the on-chain attestation.
   - Run with: `yarn example:generate-onchain-private-data-proofs`
   - **Note:** Configure the `generate-onchain-private-data-proofs` section in `config/examples.yaml`. Minimally, provide `schemaUid`, `fields`, and `fieldsToDisclose`.
@@ -257,21 +259,65 @@ The following scripts in `src/examples/` demonstrate common EAS interactions:
 The following scripts in `src/workflows/` demonstrate end-to-end use cases leveraging the modular EAS functions:
 
 - **`workflow-impact-monitoring.ts`**:
+
   - Demonstrates registering the geospatial bounds of an area (e.g., a conservation project) as an on-chain attestation.
   - Run with: `yarn workflow:impact-monitoring`
   - **Note:** You may need to edit the script to provide specific schema details or coordinates.
-
 - **`workflow-event-checkin.ts`**:
+
   - Simulates an event check-in process where attendance is recorded along with the user's geo-IP location in an attestation.
   - Run with: `yarn workflow:event-checkin`
   - **Note:** You may need to edit the script to provide a specific schema UID and recipient address.
-
 - **`workflow-geocaching.ts`**:
+
   - Illustrates a geocaching scenario that simulates a user scanning a QR code that triggers the creation of an attestation containing geospatial metadata grabbed from the scanned QR code.
   - Run with: `yarn workflow:geocache`
   - **Note:** You may need to edit the script to provide relevant schema and location details.
-
 - **`workflow-proofmode.ts`**:
+
   - Illustrates a scenario that simulates a user uploading a ProofMode file that triggers the creation of an attestation containing metadata grabbed from the uploaded ProofMode file.
   - Run with: `yarn workflow:proofmode`
   - **Note:** You may need to edit the script to provide relevant schema details.
+
+## QR Code Proof of Concept
+
+Under the `qr-poc` directory of this repository lives a React project bootstrapped with Vite. This emulates a practical example of how location attestations may be generated by common end users. The examples parallels experiences such as scanning into restaurants, that is -- checking in with a mobile device. With this example, the React app leverages a `useEffect` hook to trigger an attestation generation transaction on page load. To take this a step further, a QR code can be generated to point to the hosted webapp in which mobile devices with Metamask configured can scan the QR code and generate attestations on the device.
+
+**To run this** 
+
+Run the following in a terminal located at the root directory of this repository
+
+```
+$ yarn workspace qr-poc dev 
+```
+
+**To build**
+
+Run the following in a terminal located at the root directory of this repository
+
+```
+$ npm run build --workspace=qr-poc
+```
+
+## ProofMode Proof of Concept
+
+Under the `src/workflows` directory, you'll find `workflow-proofmode.ts`, which demonstrates a practical implementation of media verification attestations using EAS. This workflow emulates how ProofMode (a mobile app for capturing verifiable photos) data can be attested on-chain, preserving the integrity and origin of digital evidence.
+
+The workflow performs the following steps:
+1. Registers a schema designed for ProofMode metadata if not already registered
+2. Locates and extracts a ProofMode zip file containing a media file with verification metadata
+3. Processes the image and its associated proof.json file to extract geolocation data, timestamps, and other verification details
+4. Creates an on-chain attestation with the extracted metadata
+5. The attestation provides a tamper-evident, blockchain-backed verification of when and where the media was captured
+
+This proof of concept is particularly valuable for applications requiring verified media evidence, such as journalism, human rights documentation, legal evidence collection, and scientific field research where the authenticity and provenance of media are critical.
+
+**To run this workflow**
+
+First, place your ProofMode zip file (format: `Test_PM-*.zip`) containing an image and its proof.json file in the `src/workflows` directory.
+
+Then, run the following command from the root directory of this repository:
+
+```
+$ yarn workflow:proofmode
+```

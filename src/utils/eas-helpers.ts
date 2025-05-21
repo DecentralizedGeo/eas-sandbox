@@ -1,10 +1,10 @@
 import { SchemaEncoder, SchemaItem, PrivateData, MerkleValue, MerkleValueWithSalt, MerkleMultiProof } from "@ethereum-attestation-service/eas-sdk";
-import { ethers, Provider, Signer, TransactionReceipt, ContractTransaction, formatEther, formatUnits, ZeroAddress } from "ethers";
+import { ethers, Provider, Signer, TransactionReceipt, ContractTransaction, formatUnits, ZeroAddress } from "ethers";
 import { fetchSchema } from "../eas-schema";
 import { GRAPHQL_ENDPOINT } from "../config";
 
 // Helper to convert BigInt arrays to string for JSON
-export const bigIntReplacer = (key: string, value: any) =>
+export const bigIntReplacer = (_key: string, value: any) =>
     typeof value === 'bigint'
         ? value.toString()
         : value;
