@@ -29,7 +29,9 @@
         "workflow:event-checkin-alternate": "ts-node src/workflows/workflow-event-checkin-alternate.ts",
         "workflow:geocache": "ts-node src/workflows/workflow-geocaching.ts",
         "workflow:proofmode": "ts-node src/workflows/workflow-proofmode.ts",
-        "workflow:qr": "ts-node src/workflows/workflow-qr.ts"
+        "workflow:qr": "ts-node src/workflows/workflow-qr.ts",
+        "dev:qr-poc": "yarn workspace qr-poc dev",
+        "dev:validator": "yarn workspace validator dev"
     },
     "keywords": [
         "eas",
