@@ -11,6 +11,8 @@
   },
   "dependencies": {
     "@ethereum-attestation-service/eas-sdk": "^2.7.0",
+    "@types/crypto-js": "^4.2.2",
+    "crypto-js": "^4.2.0",
     "react": "^19.0.0",
     "react-dom": "^19.0.0"
   },
