@@ -9,11 +9,11 @@ VITE_PRIVATE_KEY="" # Your sepolia wallet private key (keep this to yourself!)
 VITE_INFURA_API_KEY="" # Your Infura Sepolia API key
 ```
 
-Then, run `npm install` to install packages.
+Then, run `yarn install` to install packages.
 
 ### Starting the development server
 
-To run the development server locally, run `npm run dev`. This will output an address to navigate to in a browser.
+To run the development server locally, run `yarn dev:qr-poc` in the root directory of this repository . This will output an address to navigate to in a browser.
 
 #### Browser requirements
 

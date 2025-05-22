@@ -20,6 +20,9 @@ We've also built a set of configurable example scripts that demonstrate various 
   - [Using the Configuration Manifest](#using-the-configuration-manifest)
   - [Running sample examples](#running-sample-examples)
   - [Running workflow examples](#running-workflow-examples)
+  - [QR Code Proof of Concept](#qr-code-proof-of-concept)
+    - [Running with Validation](#running-with-validation)
+  - [ProofMode Proof of Concept](#proofmode-proof-of-concept)
 
 ## RPC Provider API key (e.g., Infura, Alchemy)
 
@@ -288,23 +291,23 @@ Under the `qr-poc` directory of this repository lives a React project bootstrapp
 Run the following in a terminal located at the root directory of this repository
 
 ```
-$ yarn workspace qr-poc dev 
+yarn run dev:qr-poc
 ```
 
 **To build**
 
 Run the following in a terminal located at the root directory of this repository
 
-```
-$ npm run build --workspace=qr-poc
+```bash
+yarn run build:qr-poc
 ```
 
 ### Running with Validation
 
 Adjacent to the `qr-poc` folder exists a `validator` workspace. This poses as a proof of concept off-chain validator that monitors a specific Sepolia attestation SchemaUID, decrypting the `recipePayload` attribute. Although running this is **not** required, it can be tested with the QR code single page application (SPA). To properly run it, update the `src/config.ts` file's `ENCRYPTION_KEY` and `SCHEMA_UID` values. Then, in a terminal run:
 
-```
-$ yarn workspace validator dev
+```bash
+yarn run dev:validator
 ```
 
 Then, with the QR code SPA running, navigate to the development server URL and add the `secret` parameter equal to the `ENCRYPTION_KEY` value. For example, if my `ENCRYPTION_KEY` is `hello`, the URL I should navigate to is `http://localhost:5173/?secret=hello` assuming my development server is on `http://localhost:5173/`
@@ -329,6 +332,6 @@ First, place your ProofMode zip file (format: `Test_PM-*.zip`) containing an ima
 
 Then, run the following command from the root directory of this repository:
 
-```
-$ yarn workflow:proofmode
+```bash
+yarn workflow:proofmode
 ```
