@@ -241,16 +241,23 @@ export async function runProofModeWorkflow(): Promise<void> {
         console.log(`Using Schema UID: ${schemaUID}`);
 
         // 2. Find and extract the ProofMode zip file
-        const zipFile = fs.readdirSync(__dirname).find(file => file.startsWith('Test_PM-') && file.endsWith('.zip'));
+
+        // check if the sample-data directory exists
+        if (!fs.existsSync(path.join(__dirname, '..', '..', 'sample-data'))) {
+            throw new Error('Sample data directory not found. Please ensure it exists.');
+        }
+
+        const sampleDataDir = path.join(__dirname, '..', '..', 'sample-data');
+        const zipFile = fs.readdirSync(sampleDataDir).find(file => file.startsWith('Test_PM-') && file.endsWith('.zip'));
         if (!zipFile) {
             throw new Error('No ProofMode zip file found. Please ensure a Test_PM-*.zip file is available.');
         }
-        const zipFilePath = path.join(__dirname, zipFile);
+        const zipFilePath = path.join(sampleDataDir, zipFile);
         console.log(`Found ProofMode zip file: ${zipFilePath}`);
-        
+
         // Create a directory to extract the zip file to (use the same name as the zip file without the .zip extension)
-        const extractDir = path.join(__dirname, zipFile.replace('.zip', ''));
-        
+        const extractDir = path.join(sampleDataDir, zipFile.replace('.zip', ''));
+
         // Extract the zip file
         extractZipFile(zipFilePath, extractDir);
 
