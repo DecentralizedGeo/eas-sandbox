@@ -18,8 +18,7 @@ const WORKFLOW_CONFIG = {
 
 // ProofType enum registry
 enum ProofType {
-    BASIC = "basic",           // Basic proof
-    LOCATION = "location",     // Location verification proof
+    BASIC = "basic",           // Basic proof (i.e location proof)
     NETWORK = "network",       // Network context verification
     NOTARY = "notary",         // Third-party notarization
     C2PA = "c2pa",             // Content authenticity verification
@@ -59,6 +58,8 @@ interface ProofEvidence {
 /**
  * Extracts ProofMode metadata from proof.json file.
  * Processes a ProofMode directory and extracts metadata from the proof.json file.
+ * Requires location data (latitude/longitude) to be present in the proof.
+ * @throws Error if location data is missing
  */
 function simulateProofModeUpload(proofDir: string): {
     location: string;
@@ -95,16 +96,19 @@ function simulateProofModeUpload(proofDir: string): {
             longitude: proofData["Location.Longitude"],
             timeSeconds: parseFloat(proofData["Proof Generated"] || "0"),
         };
-
+        
+        // Validate that location data exists
+        if (!extractedData.latitude || !extractedData.longitude) {
+            throw new Error('Location data is required. The proof data does not contain valid latitude/longitude information.');
+        }
+        
         // Format the location as "latitude,longitude" if available
-        const coordinates = (extractedData.latitude && extractedData.longitude)
-            ? `${extractedData.latitude},${extractedData.longitude}`
-            : "";
-
+        const coordinates = `${extractedData.latitude},${extractedData.longitude}`;
+            
         // Determine the proof types present in this folder
         const proofTypes: ProofEvidence[] = [];
-
-        // Basic proof is always present (all .proof.json files have non-empty values for these keys)
+        
+        // Basic proof is always present
         proofTypes.push({
             proofType: ProofType.BASIC,
             payload: {
@@ -127,25 +131,18 @@ function simulateProofModeUpload(proofDir: string): {
 
                 // Regional settings
                 language: proofData["Language"],
-                locale: proofData["Locale"]
+                locale: proofData["Locale"],
+                
+                // Location information
+                latitude: proofData["Location.Latitude"],
+                longitude: proofData["Location.Longitude"],
+                locationTime: parseFloat(proofData["Location.Time"]),
+                altitude: proofData["Location.Altitude"],
+                accuracy: proofData["Location.Accuracy"],
+                locationProvider: proofData["Location.Provider"]
             }
         });
-
-        // Check for location proof
-        if (extractedData.latitude && extractedData.longitude) {
-            proofTypes.push({
-                proofType: ProofType.LOCATION,
-                payload: {
-                    latitude: proofData["Location.Latitude"],
-                    longitude: proofData["Location.Longitude"],
-                    time: parseFloat(proofData["Location.Time"]),
-                    altitude: proofData["Location.Altitude"],
-                    accuracy: proofData["Location.Accuracy"],
-                    provider: proofData["Location.Provider"]
-                }
-            });
-        }
-
+        
         // Check for network proof
         if (proofData["CellInfo"] && proofData["CellInfo"] !== "none") {
             let cellInfoData;
@@ -173,7 +170,7 @@ function simulateProofModeUpload(proofDir: string): {
 
         const data = {
             location: coordinates,
-            locationType: coordinates ? "coordinates" : "",
+            locationType: coordinates ? "decimalDegrees" : "",
             timestamp: Math.floor(extractedData.timeSeconds) || 0,
             proofs: proofTypes
         };
@@ -289,12 +286,8 @@ export async function runProofModeWorkflow(): Promise<void> {
         // Prepare the proof types for the schema
         const proofTypes: ProofEvidence[] = proofModeData.proofs;
 
-        // Convert ProofEvidence objects into tuples for the schema
-        const proofTuples = proofTypes.map(proof => {
-            // Each proof becomes a tuple of [proofType, payload]
-            // const tupleSet = [proof.proofType, proof.payload];
-            return JSON.stringify(proof); // Convert to string for EAS compatibility
-        });
+        // Convert ProofEvidence objects to strings for the schema
+        const proofStrings = proofTypes.map(proof => JSON.stringify(proof));
 
         const attestationData: OnChainAttestationData = {
             recipient: finderAddress, // Attest to the finder themselves
@@ -306,7 +299,7 @@ export async function runProofModeWorkflow(): Promise<void> {
                 { name: "location", value: proofModeData.location, type: "string" },
                 { name: "locationType", value: proofModeData.locationType, type: "string" },
                 { name: "timestamp", value: BigInt(proofModeData.timestamp), type: "uint64" },
-                { name: "proofs", value: proofTuples, type: "string[]" },
+                { name: "proofs", value: proofStrings, type: "string[]" },
             ],
         };
 
