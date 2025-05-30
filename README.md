@@ -356,9 +356,15 @@ When using ProofMode, ensure you select location mode at a minimum.
 > **Note:**
 Given that the NOTARY and C2PA  proof type classifications aren't yet implemented, the workflow will only recognize NETWORK as an additional proof type classification.
 
-Place your ProofMode zip file (format: `Test_PM-*.zip`) containing an image and its proof.json file in the `sample-data` directory of this repository.
+Run the following command from the root directory to create the `sample-data` directory:
 
-Then, run the following command from the root directory:
+```bash
+mkdir -p sample-data
+```
+
+Then, place your ProofMode zip file (format: `Test_PM-*.zip`) containing an image and its proof.json file in the `sample-data` directory of this repository.
+
+Finally, run the following command from the root directory:
 
 ```bash
 yarn workflow:proofmode
