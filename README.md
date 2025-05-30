@@ -318,19 +318,53 @@ Under the `src/workflows` directory, you'll find `workflow-proofmode.ts`, which 
 
 The workflow performs the following steps:
 
-1. Registers a schema designed for ProofMode metadata if not already registered
-2. Locates and extracts a ProofMode zip file containing a media file with verification metadata
-3. Processes the image and its associated proof.json file to extract geolocation data, timestamps, and other verification details
-4. Creates an on-chain attestation with the extracted metadata
-5. The attestation provides a tamper-evident, blockchain-backed verification of when and where the media was captured
+1. **Schema Registration**: Ensures a schema designed for ProofMode metadata exists, creating one if necessary
+2. **Metadata Extraction**: Locates and extracts a ProofMode zip file containing media with verification metadata
+3. **Metadata Processing**: Parses the extracted proof.json file to extract:
+   - Geolocation data (latitude/longitude coordinates)
+   - Timestamps of when the media was captured
+   - Device information and identifiers
+   - Network details and connectivity information
+   - Other verification details organized by proof type
+4. **Proof Type Classification**: Categorizes verification data into different proof types:
+   - BASIC: Core location and device information
+   - NETWORK: Cell information
+  
+> **Note:**
+The NOTARY and C2PA proof type classifications aren't yet implemented.
+
+
+5. **On-chain Attestation**: Creates a tamper-evident, blockchain-backed verification record with the extracted metadata
+
+> **Note:**
+The current workflow extracts metadata from ProofMode files but doesn't include the actual images in the EAS schema. Only the metadata and proofs about the images are stored on-chain.
+
+
+### Key Features
+
+- **Automatic Schema Management**: Checks for existing schemas before registration to avoid duplication
+- **Rich Metadata Extraction**: Extracts and preserves comprehensive verification data
+- **Flexible Proof Types**: The system can handle multiple types of proofs from the same media file
+- **Self-contained Verification**: Proof types are preserved as structured data in the attestation
 
 This proof of concept is particularly valuable for applications requiring verified media evidence, such as journalism, human rights documentation, legal evidence collection, and scientific field research where the authenticity and provenance of media are critical.
 
 **To run this workflow**
 
-First, place your ProofMode zip file (format: `Test_PM-*.zip`) containing an image and its proof.json file in the `src/workflows` directory.
+When using ProofMode, ensure you select location mode at a minimum.
 
-Then, run the following command from the root directory of this repository:
+> **Note:**
+Given that the NOTARY and C2PA  proof type classifications aren't yet implemented, the workflow will only recognize NETWORK as an additional proof type classification.
+
+Run the following command from the root directory to create the `sample-data` directory:
+
+```bash
+mkdir -p sample-data
+```
+
+Then, place your ProofMode zip file (format: `Test_PM-*.zip`) containing an image and its proof.json file in the `sample-data` directory of this repository.
+
+Finally, run the following command from the root directory:
 
 ```bash
 yarn workflow:proofmode
