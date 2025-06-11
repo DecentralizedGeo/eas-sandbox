@@ -43,6 +43,7 @@
     "author": "",
     "license": "ISC",
     "dependencies": {
+        "@decentralized-geo/astral-sdk": "^0.1.0",
         "@ethereum-attestation-service/eas-sdk": "^2.7.0",
         "@types/adm-zip": "^0.5.7",
         "@types/crypto-js": "^4.2.2",
