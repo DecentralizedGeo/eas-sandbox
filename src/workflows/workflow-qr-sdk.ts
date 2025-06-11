@@ -71,7 +71,7 @@ async function main() {
       debug: true,
     });
 
-    const imagePath = './examples/qrcode.png';
+    const imagePath = './src/examples/qrcode.png';
     console.log(`\nDecoding QR code from: ${imagePath}...`);
     const qrDataString = await decodeQR(imagePath);
     console.log('Decoded QR code data string:', qrDataString);
