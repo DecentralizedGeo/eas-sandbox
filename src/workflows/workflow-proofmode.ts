@@ -1,29 +1,20 @@
-import { ethers, Signer } from "ethers";
-import * as fs from 'fs';
+import { checkExistingSchema, fetchSchema, SchemaRegistrationData, registerSchema } from "../eas-schema";
+import { createOnChainAttestation, OnChainAttestationData } from "../eas-attestation";
+import { getProviderSigner } from "../provider";
+import { ethers } from "ethers";
 import * as path from 'path';
 import AdmZip from 'adm-zip';
-import { getProviderSigner } from "../provider";
-import { checkExistingSchema, fetchSchema, SchemaRegistrationData, registerSchema } from "../eas-schema"; // Assuming a utility function
-import { createOnChainAttestation, OnChainAttestationData, getAttestation } from "../eas-attestation";
+import * as fs from 'fs';
 
 // --- Workflow Configuration ---
 const WORKFLOW_CONFIG = {
     // Define the schema for ProofMode content upload
     schemaName: "ProofModeContentUpload",
     schemaUID: "", // Leave blank to register, or fill in if already registered
-    schemaString: "string location, string locationType, uint64 timestamp, string[] proofs",
+    schemaString: "string srs, string locationType, string location, uint8 specVersion, uint64 eventTimestamp, string memo, string recipeType, string[] recipePayload",
     resolverAddress: ethers.ZeroAddress, //EASSchemaRegistryAddress // Optional: Use a resolver if needed
     revocable: true, // Check-ins are typically not revocable
 };
-
-// ProofType enum registry
-enum ProofType {
-    BASIC = "basic",           // Basic proof (i.e location proof)
-    NETWORK = "network",       // Network context verification
-    NOTARY = "notary",         // Third-party notarization
-    C2PA = "c2pa",             // Content authenticity verification
-}
-// ---------------------------
 
 // Extracts zip file
 function extractZipFile(zipFilePath: string, destDir: string): string {
@@ -48,24 +39,17 @@ function extractZipFile(zipFilePath: string, destDir: string): string {
 }
 
 /**
- * Interface for proof evidence objects
- */
-interface ProofEvidence {
-    proofType: ProofType;
-    payload: any;
-}
-
-/**
- * Extracts ProofMode metadata from proof.json file.
- * Processes a ProofMode directory and extracts metadata from the proof.json file.
+ * Processes a ProofMode directory
+ * Extracts "Location.Latitude", "Location.Longitude", and "Proof Generated" metadata from proof.json file.
  * Requires location data (latitude/longitude) to be present in the proof.
  * @throws Error if location data is missing
+ * @param proofDir - The directory containing the proof.json file.
+ * @returns An object containing the location, locationType, and timestamp.
  */
-function simulateProofModeUpload(proofDir: string): {
+function processProofModeData(proofDir: string): {
     location: string;
     locationType: string;
     timestamp: number;
-    proofs: ProofEvidence[];
 } {
     console.log("\n--- Processing ProofMode Data ---");
 
@@ -94,7 +78,7 @@ function simulateProofModeUpload(proofDir: string): {
         const extractedData = {
             latitude: proofData["Location.Latitude"],
             longitude: proofData["Location.Longitude"],
-            timeSeconds: parseFloat(proofData["Proof Generated"] || "0"),
+            proofGenerated: proofData["Proof Generated"] || "",
         };
         
         // Validate that location data exists
@@ -104,82 +88,24 @@ function simulateProofModeUpload(proofDir: string): {
         
         // Format the location as "latitude,longitude" if available
         const coordinates = `${extractedData.latitude},${extractedData.longitude}`;
-            
-        // Determine the proof types present in this folder
-        const proofTypes: ProofEvidence[] = [];
-        
-        // Basic proof is always present
-        proofTypes.push({
-            proofType: ProofType.BASIC,
-            payload: {
-                // File information
-                fileHash: proofData["File Hash SHA256"],
 
-                // Device information
-                deviceId: proofData["DeviceID"],
-
-                // Timestamps
-                proofGenerated: proofData["Proof Generated"],
-
-                // Network details
-                network: proofData["Network"],
-                networkType: proofData["NetworkType"],
-                ipv4: proofData["IPv4"],
-                ipv6: proofData["IPv6"],
-                cellInfo: proofData["CellInfo"],
-                dataType: proofData["DataType"],
-
-                // Regional settings
-                language: proofData["Language"],
-                locale: proofData["Locale"],
-                
-                // Location information
-                latitude: proofData["Location.Latitude"],
-                longitude: proofData["Location.Longitude"],
-                locationTime: parseFloat(proofData["Location.Time"]),
-                altitude: proofData["Location.Altitude"],
-                accuracy: proofData["Location.Accuracy"],
-                locationProvider: proofData["Location.Provider"]
-            }
-        });
-        
-        // Check for network proof
-        if (proofData["CellInfo"] && proofData["CellInfo"] !== "none") {
-            let cellInfoData;
-            try {
-                // Try to parse cellInfo as JSON if it's a string containing JSON
-                cellInfoData = typeof proofData["CellInfo"] === 'string' && proofData["CellInfo"].startsWith('[')
-                    ? JSON.parse(proofData["CellInfo"])
-                    : proofData["CellInfo"];
-            } catch (error) {
-                // If parsing fails, use the original string value
-                cellInfoData = proofData["CellInfo"];
-            }
-
-            proofTypes.push({
-                proofType: ProofType.NETWORK,
-                payload: {
-                    cellInfo: cellInfoData, // Now properly parsed as an array of objects
-                }
-            });
+        // Parse the date string to get a timestamp in seconds
+        let timestampInSeconds = 0;
+        if (extractedData.proofGenerated) {
+            // Convert ISO 8601 date string to Unix timestamp in seconds
+            timestampInSeconds = Math.floor(new Date(extractedData.proofGenerated).getTime() / 1000);
         }
-
-        // Check for notary proof (TO DO)
-
-        // Check for C2PA proof (TO DO)
-
+        
         const data = {
             location: coordinates,
             locationType: coordinates ? "decimalDegrees" : "",
-            timestamp: Math.floor(extractedData.timeSeconds) || 0,
-            proofs: proofTypes
+            timestamp: timestampInSeconds,
         };
 
         console.log("Final Data:", {
             location: data.location || "(none)",
             locationType: data.locationType,
             timestamp: data.timestamp,
-            proofs: `${proofTypes.length} proof types detected`
         });
 
         return data;
@@ -229,10 +155,12 @@ async function ensureSchemaRegistered(signer: ethers.Signer): Promise<string> {
 
 /**
  * Runs the full ProofMode workflow:
- * 1. Ensures the ProofMode schema is registered.
- * 2. Simulates uploading the image and extracting metadata.
- * 3. Creates an on-chain attestation for the image with metadata.
- * 4. Finalizes the workflow.
+ * 1. Ensures the ProofMode schema is registered
+ * 2. Finds and extracts the ProofMode zip file
+ * 3. Computes the IPFS CID of the zip file (simulated) and creates the recipe
+ * 4. Processes the ProofMode data from the extracted folder
+ * 5. Prepares and creates an on-chain attestation with the extracted metadata and recipe
+ * 6. Finalizes the workflow.
  */
 export async function runProofModeWorkflow(): Promise<void> {
     console.log("\n--- Starting ProofMode Workflow ---");
@@ -250,16 +178,18 @@ export async function runProofModeWorkflow(): Promise<void> {
 
         // 2. Find and extract the ProofMode zip file
 
-        // check if the sample-data directory exists
+        // Check if the sample-data directory exists
         if (!fs.existsSync(path.join(__dirname, '..', '..', 'sample-data'))) {
             throw new Error('Sample data directory not found. Please ensure it exists.');
         }
 
         const sampleDataDir = path.join(__dirname, '..', '..', 'sample-data');
         const zipFile = fs.readdirSync(sampleDataDir).find(file => file.startsWith('Test_PM-') && file.endsWith('.zip'));
+        
         if (!zipFile) {
             throw new Error('No ProofMode zip file found. Please ensure a Test_PM-*.zip file is available.');
         }
+        
         const zipFilePath = path.join(sampleDataDir, zipFile);
         console.log(`Found ProofMode zip file: ${zipFilePath}`);
 
@@ -275,19 +205,24 @@ export async function runProofModeWorkflow(): Promise<void> {
 
         console.log(`Using location folder: ${extractDir}`);
 
-        // 3. Process ProofMode data from folder
-        console.log("\nStep 3: Processing ProofMode data from folder...");
+        // 3. Compute the IPFS CID of the zip file (simulated) and create the recipe
+        
+        // Note: This step is not implemented in this example, but you would typically use an IPFS library to upload the file and get the CID.
+        // For this example, we will skip the IPFS upload step and assume the CID is already known or not required.
+        console.log("\nStep 3: Computing IPFS CID of the zip file...");
+        const ipfsCID = "QmExampleCIDofTheZipFile";
+        console.log(`IPFS CID of the zip file: ${ipfsCID}`);
 
-        const proofModeData = simulateProofModeUpload(extractDir);
+        // Prepare the recipe for the schema
+        const recipe: string[] = ["ProofMode", ipfsCID];
 
-        // 4. Prepare and Create On-Chain Attestation
-        console.log("\nStep 4: Preparing and Creating On-Chain Attestation...");
+        // 4. Process the ProofMode data from the extracted folder
+        console.log("\nStep 4: Processing ProofMode data from folder...");
 
-        // Prepare the proof types for the schema
-        const proofTypes: ProofEvidence[] = proofModeData.proofs;
+        const proofModeData = processProofModeData(extractDir);
 
-        // Convert ProofEvidence objects to strings for the schema
-        const proofStrings = proofTypes.map(proof => JSON.stringify(proof));
+        // 5. Prepare and creates an on-chain attestation with the extracted metadata and recipe
+        console.log("\nStep 5: Preparing and Creating On-Chain Attestation...");
 
         const attestationData: OnChainAttestationData = {
             recipient: finderAddress, // Attest to the finder themselves
@@ -296,10 +231,14 @@ export async function runProofModeWorkflow(): Promise<void> {
             schemaUID: schemaUID,
             schemaString: WORKFLOW_CONFIG.schemaString,
             dataToEncode: [
-                { name: "location", value: proofModeData.location, type: "string" },
+                { name: "srs", value: "EPSG:4326", type: "string" },
                 { name: "locationType", value: proofModeData.locationType, type: "string" },
-                { name: "timestamp", value: BigInt(proofModeData.timestamp), type: "uint64" },
-                { name: "proofs", value: proofStrings, type: "string[]" },
+                { name: "location", value: proofModeData.location, type: "string" },
+                { name: "specVersion", value: 1, type: "uint8" },
+                { name: "eventTimestamp", value: BigInt(proofModeData.timestamp), type: "uint64" },
+                { name: "memo", value: "", type: "string" },
+                { name: "recipeType", value: "ProofMode", type: "string" },
+                { name: "recipePayload", value: recipe, type: "string[]" },
             ],
         };
 
@@ -308,8 +247,8 @@ export async function runProofModeWorkflow(): Promise<void> {
         const newAttestationUID = await createOnChainAttestation(signer, attestationData);
         console.log(`\nOn-chain ProofMode attestation created successfully! UID: ${newAttestationUID}`);
 
-        // 5. Finalize the workflow
-        console.log("\nStep 5: Finalizing the workflow...");
+        // 6. Finalize the workflow
+        console.log("\nStep 6: Finalizing the workflow...");
 
         // In a real implementation, this would involve notifying the user or updating the UI
         // Here we just log the success message
@@ -318,6 +257,7 @@ export async function runProofModeWorkflow(): Promise<void> {
     } catch (error) {
         console.error("\n--- ProofMode Workflow Failed ---");
         console.error(error);
+        throw error;
     }
 }
 
