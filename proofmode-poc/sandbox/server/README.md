@@ -12,7 +12,7 @@ This server provides an HTTP API for processing ProofMode zip files and creating
 
 ## Architecture Overview
 
-This server builds upon the original [`workflow-proofmode.ts`](../workflows/workflow-proofmode.ts) standalone script to provide a real-time API for ProofMode processing. It accepts ProofMode zip uploads via HTTP and returns structured attestation data for seamless iOS app integration.
+This server builds upon the original [`workflow-proofmode.ts`](../../../src/workflows/workflow-proofmode.ts) standalone script to provide a real-time API for ProofMode processing. It accepts ProofMode zip uploads via HTTP and returns structured attestation data for seamless iOS app integration.
 
 ## Getting Started
 
