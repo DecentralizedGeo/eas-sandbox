@@ -29,6 +29,7 @@
         "workflow:event-checkin-alternate": "ts-node src/workflows/workflow-event-checkin-alternate.ts",
         "workflow:geocache": "ts-node src/workflows/workflow-geocaching.ts",
         "workflow:proofmode": "ts-node src/workflows/workflow-proofmode.ts",
+        "workflow:proofmode-sdk": "ts-node proofmode-poc/sdk/workflow-proofmode-sdk.ts",
         "workflow:qr": "ts-node src/workflows/workflow-qr.ts",
         "workflow:qr-sdk": "ts-node src/workflows/workflow-qr-sdk.ts",
         "dev:qr-poc": "yarn workspace qr-poc dev",
