@@ -71,6 +71,22 @@ function App() {
         const urlParams = new URLSearchParams(window.location.search);
         const secret = urlParams.get('secret');
 
+        // Example url: http://localhost:3000/?secret=mySecret&coordinates=28.3772,81.5707
+        const coordinates = urlParams.get('coordinates');
+        if (coordinates) {
+          const coordsArray = coordinates.split(',').map(coord => parseFloat(coord.trim()));
+          if (coordsArray.length === 2 && coordsArray.every(coord => !isNaN(coord))) {
+            scaledLocation[0] = Math.round(coordsArray[0] * 1000000);
+            scaledLocation[1] = Math.round(coordsArray[1] * 1000000);
+            console.log("Using coordinates from URL:", scaledLocation);
+          } else {
+            console.error("Invalid coordinates format in URL. Using default mock data.");
+          }
+        } else {
+          console.log("No coordinates provided in URL. Using default mock data:", scaledLocation);
+        }
+
+
         // Encode the public key with the secret
         const recipePayload = CryptoJS.AES.encrypt(
           JSON.stringify({ publicKey: currentSigner.address }),
