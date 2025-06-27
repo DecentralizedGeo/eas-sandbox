@@ -1,6 +1,7 @@
 import { checkExistingSchema, fetchSchema, SchemaRegistrationData, registerSchema } from "../eas-schema";
 import { createOnChainAttestation, OnChainAttestationData } from "../eas-attestation";
 import { getProviderSigner } from "../provider";
+import { uploadToWeb3Storage } from "../web3storage";
 import { ethers } from "ethers";
 import * as path from 'path';
 import AdmZip from 'adm-zip';
@@ -11,7 +12,7 @@ const WORKFLOW_CONFIG = {
     // Define the schema for ProofMode content upload
     schemaName: "ProofModeContentUpload",
     schemaUID: "", // Leave blank to register, or fill in if already registered
-    schemaString: "string srs, string locationType, string location, uint8 specVersion, uint64 eventTimestamp, string memo, string recipeType, string[] recipePayload",
+    schemaString: "string srs, string locationType, string location, uint8 specVersion, uint64 eventTimestamp, string memo, string recipeType, string[] recipePayload, string mediaData, string mediaType",
     resolverAddress: ethers.ZeroAddress, //EASSchemaRegistryAddress // Optional: Use a resolver if needed
     revocable: true, // Check-ins are typically not revocable
 };
@@ -157,9 +158,9 @@ async function ensureSchemaRegistered(signer: ethers.Signer): Promise<string> {
  * Runs the full ProofMode workflow:
  * 1. Ensures the ProofMode schema is registered
  * 2. Finds and extracts the ProofMode zip file
- * 3. Computes the IPFS CID of the zip file (simulated) and creates the recipe
+ * 3. Uploads the zip file to Web3.Storage and gets the CID
  * 4. Processes the ProofMode data from the extracted folder
- * 5. Prepares and creates an on-chain attestation with the extracted metadata and recipe
+ * 5. Prepares and creates an on-chain attestation with the extracted metadata and IPFS CID
  * 6. Finalizes the workflow.
  */
 export async function runProofModeWorkflow(): Promise<void> {
@@ -184,10 +185,10 @@ export async function runProofModeWorkflow(): Promise<void> {
         }
 
         const sampleDataDir = path.join(__dirname, '..', '..', 'sample-data');
-        const zipFile = fs.readdirSync(sampleDataDir).find(file => file.startsWith('Test_PM-') && file.endsWith('.zip'));
+        const zipFile = fs.readdirSync(sampleDataDir).find(file => file.endsWith('.zip'));
         
         if (!zipFile) {
-            throw new Error('No ProofMode zip file found. Please ensure a Test_PM-*.zip file is available.');
+            throw new Error('No zip file found in sample-data directory. Please ensure a .zip file is available.');
         }
         
         const zipFilePath = path.join(sampleDataDir, zipFile);
@@ -205,13 +206,20 @@ export async function runProofModeWorkflow(): Promise<void> {
 
         console.log(`Using location folder: ${extractDir}`);
 
-        // 3. Compute the IPFS CID of the zip file (simulated) and create the recipe
+        // 3. Upload the zip file to Web3.Storage and get the CID
+        console.log("\nStep 3: Uploading zip file to Web3.Storage...");
         
-        // Note: This step is not implemented in this example, but you would typically use an IPFS library to upload the file and get the CID.
-        // For this example, we will skip the IPFS upload step and assume the CID is already known or not required.
-        console.log("\nStep 3: Computing IPFS CID of the zip file...");
-        const ipfsCID = "QmExampleCIDofTheZipFile";
-        console.log(`IPFS CID of the zip file: ${ipfsCID}`);
+        const mediaType = "application/zip";
+        
+        // Read the zip file and upload to Web3.Storage
+        const zipFileBuffer = fs.readFileSync(zipFilePath);
+        const zipFileName = path.basename(zipFilePath);
+        const ipfsResult = await uploadToWeb3Storage(zipFileBuffer, zipFileName);
+        const ipfsCID = ipfsResult.cid;
+        
+        console.log(`File uploaded to IPFS successfully!`);
+        console.log(`IPFS CID: ${ipfsCID}`);
+        console.log(`Media Type: ${mediaType}`);
 
         // Prepare the recipe for the schema
         const recipe: string[] = ["ProofMode", ipfsCID];
@@ -239,6 +247,8 @@ export async function runProofModeWorkflow(): Promise<void> {
                 { name: "memo", value: "", type: "string" },
                 { name: "recipeType", value: "ProofMode", type: "string" },
                 { name: "recipePayload", value: recipe, type: "string[]" },
+                { name: "mediaData", value: ipfsCID, type: "string" },
+                { name: "mediaType", value: mediaType, type: "string" },
             ],
         };
 
