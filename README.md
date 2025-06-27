@@ -45,6 +45,7 @@ By default, all transactions have been configured for the Ethereum Sepolia test 
   - `eas-attestation.ts`: Functions for creating, fetching, and revoking on-chain and off-chain attestations.
   - `eas-schema.ts`: Functions for registering and fetching schemas.
   - `offchain-storage.ts`: Functions for saving and loading off-chain attestations to a local JSON file.
+  - `web3storage.ts`: Functions for uploading files to IPFS/Filecoin via Web3.Storage (uses `web3-storage-uploader.mjs` as an ES module helper for CommonJS compatibility).
 - `src/utils/`: Contains utility functions for various tasks.
   - `config-helpers.ts`: Functions for loading and validating configuration files.
   - `eas-helpers.ts`: Functions for interacting with the EAS SDK and Ethereum network.
@@ -81,6 +82,10 @@ At the minimum, you will need to set the following environment variables:
 
 - `PRIVATE_KEY`: The private key of your wallet. This is used to sign transactions and attestations. **Keep this secret!**
 - `INFURA_API_KEY`: The API key for your RPC provider (e.g., Infura, Alchemy). This is used to connect to the Ethereum network.
+
+**For Web3.Storage integration (ProofMode workflow):**
+- `WEB3STORAGE_TOKEN`: Your Web3.Storage token for authentication. Required for uploading files to IPFS/Filecoin.
+- `WEB3STORAGE_PROOF`: Your Web3.Storage space delegation proof. Required for uploading files to IPFS/Filecoin.
 
 > NOTE: Ensure your wallet has some test ether from the Ethereum Sepolia test network. You can use a faucet to get some test ether. I recommend using [Google&#39;s Faucet](https://cloud.google.com/application/web3/faucet/ethereum/sepolia) to get some test ether.
 
@@ -319,42 +324,56 @@ Under the `src/workflows` directory, you'll find `workflow-proofmode.ts`, which 
 The workflow performs the following steps:
 
 1. **Schema Registration**: Ensures a schema designed for ProofMode metadata exists, creating one if necessary
-2. **Metadata Extraction**: Locates and extracts a ProofMode zip file containing media with verification metadata
-3. **Metadata Processing**: Parses the extracted proof.json file to extract:
-   - Geolocation data (latitude/longitude coordinates)
-   - Timestamps of when the media was captured
-   - Device information and identifiers
-   - Network details and connectivity information
-   - Other verification details organized by proof type
-4. **Proof Type Classification**: Categorizes verification data into different proof types:
-   - BASIC: Core location and device information
-   - NETWORK: Cell information
-  
+2. **File Discovery**: Locates ProofMode zip file in the `sample-data` directory
+3. **File Extraction**: Extracts the zip file to access the contained media and proof metadata
+4. **IPFS Storage**: Uploads the entire ProofMode zip file to IPFS/Filecoin via Web3.Storage, generating a content-addressed CID
+5. **Metadata Processing**: Parses the extracted `.proof.json` file to extract:
+   - Geolocation data (latitude/longitude coordinates from `Location.Latitude` and `Location.Longitude`)
+   - Timestamps from `Proof Generated` field
+   - Validates that location data is present (required for attestation)
+6. **On-chain Attestation**: Creates a tamper-evident, blockchain-backed verification record with:
+   - Spatial Reference System (SRS): EPSG:4326
+   - Location data in decimal degrees format
+   - Event timestamp from proof generation
+   - Recipe payload containing ProofMode identifier and IPFS CID
+   - Media data (IPFS CID) and media type (application/zip)
+
+The schema used includes these fields:
+- `srs`: Spatial reference system identifier
+- `locationType`: Format of location data (e.g., "decimalDegrees")
+- `location`: Coordinates in "latitude,longitude" format
+- `specVersion`: Schema specification version
+- `eventTimestamp`: Unix timestamp of when the proof was generated
+- `memo`: Optional memo field
+- `recipeType`: Type identifier ("ProofMode")
+- `recipePayload`: Array containing proof type and IPFS CID
+- `mediaData`: IPFS CID of the uploaded zip file
+- `mediaType`: MIME type of the uploaded file
+
 > **Note:**
-The NOTARY and C2PA proof type classifications aren't yet implemented.
-
-
-5. **On-chain Attestation**: Creates a tamper-evident, blockchain-backed verification record with the extracted metadata
-
-> **Note:**
-The current workflow extracts metadata from ProofMode files but doesn't include the actual images in the EAS schema. Only the metadata and proofs about the images are stored on-chain.
+The workflow uploads the complete ProofMode zip file (including images and metadata) to IPFS/Filecoin for decentralized storage. The on-chain attestation stores the extracted metadata and IPFS CID reference, ensuring both accessibility and immutability.
 
 
 ### Key Features
 
 - **Automatic Schema Management**: Checks for existing schemas before registration to avoid duplication
-- **Rich Metadata Extraction**: Extracts and preserves comprehensive verification data
-- **Flexible Proof Types**: The system can handle multiple types of proofs from the same media file
-- **Self-contained Verification**: Proof types are preserved as structured data in the attestation
+- **Decentralized Storage**: Uploads complete ProofMode packages to IPFS/Filecoin via Web3.Storage for permanent, decentralized access
+- **Location Validation**: Requires valid latitude/longitude coordinates for attestation creation
+- **Flexible File Processing**: Automatically discovers and processes ProofMode zip files in the directory
+- **Structured Metadata**: Preserves comprehensive verification data in a standardized schema format
+- **Content Addressing**: Uses IPFS CIDs for tamper-evident references to original media files
 
 This proof of concept is particularly valuable for applications requiring verified media evidence, such as journalism, human rights documentation, legal evidence collection, and scientific field research where the authenticity and provenance of media are critical.
 
 **To run this workflow**
 
-When using ProofMode, ensure you select location mode at a minimum.
+The workflow requires ProofMode zip files with location data enabled. Ensure your ProofMode app is configured to capture location information.
 
-> **Note:**
-Given that the NOTARY and C2PA  proof type classifications aren't yet implemented, the workflow will only recognize NETWORK as an additional proof type classification.
+**Prerequisites:**
+- Configure Web3.Storage credentials in your `.env` file (`WEB3STORAGE_TOKEN` and `WEB3STORAGE_PROOF`)
+- Ensure your wallet has sufficient Sepolia test ETH for transaction fees
+
+**Setup:**
 
 Run the following command from the root directory to create the `sample-data` directory:
 
@@ -362,7 +381,9 @@ Run the following command from the root directory to create the `sample-data` di
 mkdir -p sample-data
 ```
 
-Then, place your ProofMode zip file (format: `Test_PM-*.zip`) containing an image and its proof.json file in the `sample-data` directory of this repository.
+Then, place your ProofMode zip file in the `sample-data` directory of this repository.
+
+**Important:** The workflow requires location data (latitude/longitude) to be present in the proof file. If location data is missing, the workflow will fail with an error.
 
 Finally, run the following command from the root directory:
 
