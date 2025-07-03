@@ -9,17 +9,18 @@ HTTP server implementation that processes ProofMode zip files and creates blockc
 **Components:**
 - **Express HTTP server** ([`server.ts`](server.ts)) - Handles multipart file uploads and CORS
 - **ProofMode workflow processor** ([`workflow-proofmode-server.ts`](workflow-proofmode-server.ts)) - Extracts and processes proof data  
+- **Web3.Storage integration** - Uploads complete ProofMode packages to IPFS/Filecoin for decentralized storage
 - **EAS integration** - Creates blockchain attestations using existing EAS SDK
 
 ## Configuration
 
 **EAS Schema:**
 ```typescript
-schemaString: "string srs, string locationType, string location, uint8 specVersion, uint64 eventTimestamp, string memo, string recipeType, string[] recipePayload"
+schemaString: "string srs, string locationType, string location, uint8 specVersion, uint64 eventTimestamp, string memo, string recipeType, string[] recipePayload, string mediaData, string mediaType"
 ```
 
 **Network:** Sepolia testnet (configurable via environment variables)  
-**File Storage:** Temporary uploads in system temp directory  
+**File Storage:** Temporary uploads in system temp directory, permanent storage on IPFS/Filecoin via Web3.Storage  
 **Dependencies:** Uses existing EAS Sandbox project dependencies
 
 ## Prerequisites
@@ -27,6 +28,9 @@ schemaString: "string srs, string locationType, string location, uint8 specVersi
 - Node.js (v18.20.5 or later)
 - Yarn package manager  
 - Ethereum Attestation Service configuration (configured in `.env` file)
+- **Web3.Storage credentials** (required for IPFS/Filecoin uploads):
+  - `WEB3STORAGE_TOKEN`: Your Web3.Storage token for authentication
+  - `WEB3STORAGE_PROOF`: Your Web3.Storage space delegation proof
 
 ## Installation & Running
 

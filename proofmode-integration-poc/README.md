@@ -8,7 +8,8 @@ Connect [ProofMode iOS app](https://gitlab.com/guardianproject/proofmode/proofmo
 
 **Key Benefits:**
 - 🔗 **Permanent Records**: Location proofs stored on blockchain, not just device
-- 🔍 **Public Verification**: Anyone can verify authenticity via EAS explorer
+- 🗄️ **Decentralized Storage**: Complete ProofMode packages uploaded to IPFS/Filecoin via Web3.Storage
+- 🔍 **Public Verification**: Anyone can verify authenticity via EAS explorer and access original files via IPFS/Filecoin
 - 📱 **Seamless Experience**: One-tap attestation creation from ProofMode share menu
 - 🛡️ **Zero Breaking Changes**: All original ProofMode functionality preserved
 
@@ -52,22 +53,24 @@ flowchart LR
         E --> F[🌐 Express server<br/>receives zip file]
         F --> G[📂 Server extracts<br/>zip to temp directory]
         G --> H[🔍 Parse .proof.json<br/>extract location data]
+        H --> I[📤 Upload zip to<br/>IPFS/Filecoin via Web3.Storage]
     end
     
     subgraph col3 ["EAS Integration"]
         direction TB
-        I[🔗 Check/Register<br/>ProofMode schema]
-        I --> J[📝 Create attestation<br/>with location protocol]
-        J --> K[⛓️ Submit on-chain<br/>attestation to EAS]
-        K --> L[✅ Receive attestation<br/>UID from blockchain]
+        J[🔗 Check/Register<br/>ProofMode schema]
+        J --> K[📝 Create attestation<br/>with location & IPFS CID]
+        K --> L[⛓️ Submit on-chain<br/>attestation to EAS]
+        L --> M[✅ Receive attestation<br/>UID from blockchain]
     end
     
     subgraph col4 ["Response & Actions"]
         direction TB
-        M[📊 Server returns JSON<br/>with UID & EAS URL]
-        M --> N[📱 iOS displays<br/>success alert]
-        N --> O[👁️ View on EAS]
-        N --> P[📋 Copy UID]
+        N[📊 Server returns JSON<br/>with UID & EAS URL]
+        N --> O[📱 iOS displays<br/>success alert]
+        O --> P[👁️ View on EAS]
+        O --> Q[📋 Copy UID]
+        O --> R[🌐 Download Proof File]
     end
     
     %% Flow between columns (left to right connections)
@@ -87,9 +90,9 @@ flowchart LR
     classDef server fill:#e8f5e8,stroke:#2e7d32,stroke-width:1px
     
     class A,B,C,D proofmode
-    class E,F,G,H integration
-    class I,J,K,L server
-    class M,N,O,P userAction
+    class E,F,G,H,I integration
+    class J,K,L,M server
+    class N,O,P,Q,R userAction
 ```
 
 ## 📁 Components
@@ -108,6 +111,7 @@ Express server that processes ProofMode zip files and creates EAS attestations. 
 
 ## 🛠️ Technical Summary
 
-**Data Flow:** ProofMode ZIP → HTTP API → EAS Blockchain → Response with attestation UID  
+**Data Flow:** ProofMode ZIP → HTTP API → IPFS/Filecoin Upload → EAS Blockchain → Response with attestation UID & IPFS CID  
+**Storage:** Decentralized via Web3.Storage (IPFS/Filecoin)  
 **Network:** Sepolia testnet (configurable)  
 **Upstream Source:** [ProofMode iOS ActivityView.swift](https://gitlab.com/guardianproject/proofmode/proofmode-ios/-/blob/2865bd9a1a4f3b4d757f6ed0cae45e75c1e6621f/Proofmode/ActivityView.swift)
