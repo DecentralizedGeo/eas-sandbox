@@ -62,7 +62,7 @@ app.post('/upload', upload.single('proofmodeFile'), (req: express.Request, res: 
   
   // Process the uploaded file with the ProofMode workflow
   runProofModeWorkflowWithFile(req.file.path)
-    .then((result: { attestationUID: string; location: string; timestamp: number }) => {
+    .then((result: { attestationUID: string; location: string; timestamp: number; ipfsCID: string; ipfsUri: string }) => {
       // Return the attestation result
       res.json({
         success: true,
@@ -70,6 +70,8 @@ app.post('/upload', upload.single('proofmodeFile'), (req: express.Request, res: 
         attestationUID: result.attestationUID,
         location: result.location,
         timestamp: result.timestamp,
+        ipfsCID: result.ipfsCID,
+        ipfsUri: result.ipfsUri,
         easUrl: `https://sepolia.easscan.org/attestation/view/${result.attestationUID}`
       });
     })

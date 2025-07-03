@@ -675,6 +675,12 @@ struct ActivitiesView : View {
                     UIPasteboard.general.string = uid
                 }
             }
+            Button("Download Proof File") {
+                if let ipfsUri = attestationResult["ipfsUri"] as? String,
+                   let url = URL(string: ipfsUri) {
+                    UIApplication.shared.open(url)
+                }
+            }
             Button("OK") { }
         } message: {
             VStack(alignment: .leading, spacing: 4) {
@@ -683,6 +689,9 @@ struct ActivitiesView : View {
                 }
                 if let location = attestationResult["location"] as? String {
                     Text("Location: \(location)")
+                }
+                if let ipfsCID = attestationResult["ipfsCID"] as? String {
+                    Text("IPFS CID: \(String(ipfsCID.prefix(12)))...")
                 }
             }
         }
@@ -728,6 +737,8 @@ struct ActivitiesView : View {
                                 print("Attestation UID: \(json["attestationUID"] ?? "N/A")")
                                 print("Location: \(json["location"] ?? "N/A")")
                                 print("EAS URL: \(json["easUrl"] ?? "N/A")")
+                                print("IPFS CID: \(json["ipfsCID"] ?? "N/A")")
+                                print("IPFS URI: \(json["ipfsUri"] ?? "N/A")")
                                 
                                 self.attestationResult = json
                                 self.showSuccessAlert = true
