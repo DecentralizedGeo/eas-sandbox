@@ -12,7 +12,8 @@
     "webapp": "tsx server.ts",
     "test": "tsx test-node-example test/*",
     "test:cid": "tsx test-cid-versions.ts",
-    "test:webapp": "tsx test-webapp-cid.ts"
+    "test:webapp": "tsx test-webapp-cid.ts",
+    "get-cid": "tsx get-cid.ts"
   },
   "dependencies": {
     "@chainsafe/libp2p-noise": "^16.1.0",
