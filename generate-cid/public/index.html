@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CID Generator - Helia</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+
+<body>
+    <div class="container">
+        <header>
+            <h1>🗂️ CID Generator</h1>
+            <p>Generate Content Identifiers (CIDs) using Helia</p>
+        </header>
+
+        <main>
+            <!-- Settings Panel -->
+            <section class="settings-panel">
+                <h2>⚙️ CID Generation Settings</h2>
+                <div class="settings-grid">
+                    <div class="setting-group">
+                        <label for="cidVersion">CID Version:</label>
+                        <select id="cidVersion">
+                            <option value="0">Version 0</option>
+                            <option value="1" selected>Version 1</option>
+                        </select>
+                    </div>
+
+                    <div class="setting-group">
+                        <label for="chunker">Chunker:</label>
+                        <select id="chunker">
+                            <option value="fixed" selected>Fixed Size</option>
+                            <option value="rabin">Rabin</option>
+                        </select>
+                    </div>
+
+                    <div class="setting-group">
+                        <label for="layout">Layout:</label>
+                        <select id="layout">
+                            <option value="balanced" selected>Balanced</option>
+                            <option value="flat">Flat</option>
+                        </select>
+                    </div>
+                </div>
+
+                <!-- Advanced Settings -->
+                <details class="advanced-settings">
+                    <summary>Advanced Settings</summary>
+                    <div class="advanced-grid">
+                        <div class="setting-group" id="fixedChunkerSettings">
+                            <label for="chunkSize">Chunk Size (bytes):</label>
+                            <input type="number" id="chunkSize" value="1048576" min="1024">
+                        </div>
+
+                        <div class="setting-group hidden" id="rabinChunkerSettings">
+                            <label for="avgChunkSize">Avg Chunk Size:</label>
+                            <input type="number" id="avgChunkSize" value="1048576" min="1024">
+                            <label for="minChunkSize">Min Chunk Size:</label>
+                            <input type="number" id="minChunkSize" value="524288" min="1024">
+                            <label for="maxChunkSize">Max Chunk Size:</label>
+                            <input type="number" id="maxChunkSize" value="2097152" min="1024">
+                        </div>
+
+                        <div class="setting-group" id="balancedLayoutSettings">
+                            <label for="maxChildrenPerNode">Max Children Per Node:</label>
+                            <input type="number" id="maxChildrenPerNode" value="1024" min="1">
+                        </div>
+                    </div>
+                </details>
+            </section>
+
+            <!-- Input Methods -->
+            <section class="input-methods">
+                <div class="tabs">
+                    <button class="tab-button active" data-tab="file">📁 File Upload</button>
+                    <button class="tab-button" data-tab="url">🌐 URL</button>
+                    <button class="tab-button" data-tab="text">📝 Text</button>
+                </div>
+
+                <!-- File Upload Tab -->
+                <div class="tab-content active" id="file-tab">
+                    <div class="drop-zone" id="dropZone">
+                        <div class="drop-zone-content">
+                            <p>📤 Drag and drop a file here</p>
+                            <p>or</p>
+                            <button type="button" class="btn-secondary"
+                                onclick="document.getElementById('fileInput').click()">Choose File</button>
+                            <input type="file" id="fileInput" style="display: none;">
+                        </div>
+                    </div>
+                    <div class="file-info hidden" id="fileInfo">
+                        <p><strong>Selected file:</strong> <span id="fileName"></span></p>
+                        <p><strong>Size:</strong> <span id="fileSize"></span></p>
+                        <div class="file-actions">
+                            <button class="btn-primary" id="generateFileCid">Generate CID</button>
+                            <button class="btn-secondary" id="clearFile">Clear File</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- URL Tab -->
+                <div class="tab-content" id="url-tab">
+                    <div class="url-input-group">
+                        <input type="url" id="urlInput" placeholder="https://example.com/file.txt" class="url-input">
+                        <button class="btn-primary" id="generateUrlCid">Generate CID</button>
+                    </div>
+                </div>
+
+                <!-- Text Tab -->
+                <div class="tab-content" id="text-tab">
+                    <div class="text-input-group">
+                        <textarea id="textInput" placeholder="Enter your text content here..." rows="6"></textarea>
+                        <button class="btn-primary" id="generateTextCid">Generate CID</button>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Results -->
+            <section class="results" id="results">
+                <h2>📋 Results</h2>
+                <div class="result-card hidden" id="resultCard">
+                    <div class="cid-display">
+                        <label>Generated CID:</label>
+                        <div class="cid-value">
+                            <code id="cidValue"></code>
+                            <button class="copy-btn" id="copyCid" title="Copy to clipboard">📋</button>
+                        </div>
+                    </div>
+                    <div class="result-details" id="resultDetails"></div>
+                </div>
+                <div class="loading hidden" id="loading">
+                    <div class="spinner"></div>
+                    <p>Generating CID...</p>
+                </div>
+                <div class="error hidden" id="error">
+                    <p id="errorMessage"></p>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <script src="script.js"></script>
+    <script src="https://unpkg.com/@helia/http/dist/index.min.js"></script>
+</body>
+
+</html>

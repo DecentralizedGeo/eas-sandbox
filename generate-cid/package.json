@@ -1,0 +1,45 @@
+{
+  "name": "generate-cid",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Get the CID of content from various sources using Helia",
+  "license": "MIT",
+  "scripts": {
+    "build": "tsc",
+    "dev": "tsx watch server.ts",
+    "start": "node dist/server.js",
+    "webapp": "tsx server.ts",
+    "test": "tsx test-node-example test/*",
+    "test:cid": "tsx test-cid-versions.ts",
+    "test:webapp": "tsx test-webapp-cid.ts"
+  },
+  "dependencies": {
+    "@chainsafe/libp2p-noise": "^16.1.0",
+    "@chainsafe/libp2p-yamux": "^7.0.1",
+    "@helia/http": "^2.0.5",
+    "@helia/unixfs": "^5.0.0",
+    "@libp2p/bootstrap": "^11.0.32",
+    "@libp2p/identify": "^3.0.27",
+    "@libp2p/tcp": "^10.1.8",
+    "blockstore-core": "^5.0.2",
+    "blockstore-fs": "^2.0.2",
+    "cors": "^2.8.5",
+    "datastore-core": "^10.0.2",
+    "datastore-fs": "^10.0.2",
+    "express": "^5.1.0",
+    "helia": "^5.3.0",
+    "ipfs-unixfs-importer": "^15.4.0",
+    "libp2p": "^2.8.2",
+    "multer": "^2.0.1",
+    "multiformats": "^13.3.7"
+  },
+  "devDependencies": {
+    "@types/cors": "^2.8.17",
+    "@types/express": "^4.17.21",
+    "@types/multer": "^1.4.12",
+    "@types/node": "^20.0.0",
+    "tsx": "^4.7.0",
+    "typescript": "^5.3.0"
+  }
+}
