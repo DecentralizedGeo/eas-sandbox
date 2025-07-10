@@ -36,7 +36,8 @@
     "build:qr-poc": "yarn workspace qr-poc build",
     "dev:validator": "yarn workspace validator dev",
     "build:generate-cid": "yarn workspace generate-cid build",
-    "run:generate-cid": "yarn workspace generate-cid webapp"
+    "generate-cid-webapp": "yarn workspace generate-cid webapp",
+    "get-cid": "yarn workspace generate-cid get-cid"
   },
   "keywords": [
     "eas",
