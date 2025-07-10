@@ -33,6 +33,7 @@
     "server:proofmode": "ts-node proofmode-integration-poc/server/server.ts",
     "workflow:qr": "ts-node src/workflows/workflow-qr.ts",
     "workflow:qr-sdk": "ts-node src/workflows/workflow-qr-sdk.ts",
+    "filebase": "ts-node src/filebase.ts",
     "dev:qr-poc": "yarn workspace qr-poc dev",
     "build:qr-poc": "yarn workspace qr-poc build",
     "dev:validator": "yarn workspace validator dev"
