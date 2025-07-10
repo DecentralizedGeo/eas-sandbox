@@ -2,6 +2,8 @@
 
 A TypeScript package for generating Content Identifiers (CIDs) using Helia without uploading to IPFS blockstore.
 
+> This comprehensive package was mainly designed to explore how different chunking and layout strategies affect CID generation, especially for large files. [This selection](https://github.com/DecentralizedGeo/eas-sandbox/blob/727b2ed39d1b3ab9f8338d23ac01b6bfacb36d7e/generate-cid/get-cid.ts#L61-L88) selection of code is all it takes to generate CIDs using Helia.
+
 ## Overview
 
 This package provides both a CLI tool and web interface to generate IPFS-compatible CIDs from files or text content. It uses Helia's [HTTP implementation](https://ipfs.github.io/helia/modules/_helia_http.html) to calculate CIDs locally without uploading to IPFS. I've added a few options to customize the chunking algorithms and layout strategies to see how CIDs would look with different configurations.
