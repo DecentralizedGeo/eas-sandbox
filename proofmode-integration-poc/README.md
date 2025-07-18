@@ -13,6 +13,36 @@ Connect [ProofMode iOS app](https://gitlab.com/guardianproject/proofmode/proofmo
 - 📱 **Seamless Experience**: One-tap attestation creation from ProofMode share menu
 - 🛡️ **Zero Breaking Changes**: All original ProofMode functionality preserved
 
+## 🎯 Conceptual Overview
+
+```mermaid
+flowchart TD
+    subgraph problem ["The Challenge"]
+        A[Digital media can be<br/>easily manipulated]
+        B[Location claims are<br/>hard to verify]
+        C[Proof files stay locked<br/>on individual devices]
+    end
+    
+    subgraph solution ["Our Solution"]
+        D[ProofMode captures<br/>cryptographic evidence]
+        E[One-tap blockchain<br/>attestation creation]
+        F[Permanent, public<br/>verification system]
+    end
+    
+    subgraph value ["Key Benefits"]
+        G[Tamper-proof records<br/>on blockchain]
+        H[Global accessibility<br/>via IPFS/Filecoin]
+        I[Instant verification<br/>by anyone, anywhere]
+    end
+    
+    problem --> solution
+    solution --> value
+    
+    style problem fill:#ffebee,stroke:#c62828,stroke-width:2px
+    style solution fill:#e8f5e8,stroke:#2e7d32,stroke-width:2px
+    style value fill:#e3f2fd,stroke:#1565c0,stroke-width:2px
+```
+
 ## 🚀 Quick Start
 
 1. **Start the server:**
